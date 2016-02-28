@@ -19,13 +19,10 @@ namespace _02
 
 			foreach (var line in input)
 			{
-				var dims = line.Split('x').Select(int.Parse).OrderBy(d => d).ToArray();
+				var dims = line.Split('x').Select(int.Parse).ToArray();
 
-				var paperNeeded = CalculatePaperNeed(dims[0], dims[1], dims[2]);
-				var ribbonNeeded = CalculateRibbonNeeded(dims[0], dims[1], dims[2]);
-
-				totalPaperNeeded += paperNeeded;
-				totalRibbonNeeded += ribbonNeeded;
+				totalPaperNeeded += CalculatePaperNeed(dims[0], dims[1], dims[2]);
+				totalRibbonNeeded += CalculateRibbonNeeded(dims[0], dims[1], dims[2]);
 			}
 
 			Console.WriteLine("Paper needed: {0} sq feet", totalPaperNeeded);
