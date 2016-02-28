@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -31,9 +32,12 @@ namespace AdventOfCode_01
 				}
 			}
 
-			Console.WriteLine("Input length: {0}", input.Length );
-			Console.WriteLine("Floor: {0}", floor);
-			Console.WriteLine("Basement position: {0}", basementPosition);
+			Console.WriteLine("Ended on Floor: {0}", floor);
+			if (foundBasement)
+				Console.WriteLine("Basement position: {0}", basementPosition);
+			else
+				Console.WriteLine("Didn't enter basement");
+
 			Console.ReadLine();
 		}
 	}
