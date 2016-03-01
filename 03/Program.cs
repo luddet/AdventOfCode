@@ -58,23 +58,47 @@ namespace _03
 		static void Main(string[] args)
 		{
 			var input = File.ReadAllText("input.txt");
+
+			var numberOfHouses1 = CalculatePart1(input);
+			var numberOfHouses2 = CalculatePart2(input);
+
+			Console.WriteLine("1. Number of houses that get at least one present: {0}", numberOfHouses1);
+			Console.WriteLine("2. Number of houses that get at least one present: {0}", numberOfHouses2);
+			Console.ReadLine();
+		}
+
+		private static int CalculatePart1(string input)
+		{
 			var currentCoord = new Coord();
 			var visitedHouses = new Dictionary<Coord, int>(new CoordEqualityComparer());
 
 			Deliver(currentCoord, visitedHouses);
+			Deliver(currentCoord, visitedHouses);
+
 			foreach (var ch in input)
 			{
 				if (Move(currentCoord, ch))
 					Deliver(currentCoord, visitedHouses);
 			}
+			return visitedHouses.Count;
+		}
 
-//			foreach (var kvp in visitedHouses)
-//			{
-//				Console.WriteLine("{0} : {1}",kvp.Key, kvp.Value );
-//			}
+		private static int CalculatePart2(string input)
+		{
+			var coords = new[] {new Coord(), new Coord()};
+			var visitedHouses = new Dictionary<Coord, int>(new CoordEqualityComparer());
 
-			Console.WriteLine("Number of houses that get at least one present: {0}", visitedHouses.Count);
-			Console.ReadLine();
+			Deliver(coords[0], visitedHouses);
+			Deliver(coords[0], visitedHouses);
+
+			int currentCoord = 0;
+			foreach (var ch in input)
+			{
+				if (Move(coords[currentCoord], ch))
+					Deliver(coords[currentCoord], visitedHouses);
+				currentCoord = (++currentCoord)%coords.Length;
+			}
+			return visitedHouses.Count;
 		}
 
 		private static bool Move(Coord currentCoord, char ch)
