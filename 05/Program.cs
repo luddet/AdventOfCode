@@ -16,16 +16,24 @@ namespace _05
 
 			var forbiddenStrings = new [] { "ab", "cd", "pq", "xy" };
 
-			var criteria = new List<Func<string, bool>>
+			var part1Criteria = new List<Func<string, bool>>
 			{
 				str => str.Count(ch => ("aeiou").Contains(ch)) >= 3,
 				str => Regex.Match(str, @"(\w)\1").Success,
 				str => !forbiddenStrings.Any(str.Contains)
 			};
 
-			var niceCount = input.Count(str => criteria.All(crit => crit(str)));
+			var part2Criteria = new List<Func<string, bool>>
+			{
+				str => Regex.IsMatch(str, @"(..).*\1"),
+				str => Regex.IsMatch(str, @"(.).\1")
+			};
 
-			Console.WriteLine("Nice lines: {0}", niceCount);
+			var part1NiceCount = input.Count(str => part1Criteria.All(crit => crit(str)));
+			var part2NiceCount = input.Count(str => part2Criteria.All(crit => crit(str)));
+
+			Console.WriteLine("Nice lines 1: {0}", part1NiceCount);
+			Console.WriteLine("Nice lines 2: {0}", part2NiceCount);
 			Console.ReadLine();
 		}
 
