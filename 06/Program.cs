@@ -39,9 +39,61 @@ namespace _06
 			var input = File.ReadAllLines("input.txt");
 			var instructions = ParseInput(input);
 
+			var numberOfTurnedOnLights = Part1(instructions);
+			uint brightness = Part2(instructions);
+
+			Console.WriteLine("Number of lights on: {0}", numberOfTurnedOnLights);
+			Console.WriteLine("Brightness: {0}", brightness);
+			Console.ReadLine();
+		}
+
+		private static uint Part2(List<Instruction> instructions)
+		{
+			var grid = new uint[1000, 1000];
+
+			ExecuteInstructionsForPart2(instructions, grid);
+
+			uint brightness = 0;
+			foreach (var cell in grid)
+			{
+				brightness += cell;
+			}
+			return brightness;
+
+		}
+
+		private static void ExecuteInstructionsForPart2(List<Instruction> instructions, uint[,] grid)
+		{
+			foreach (var instruction in instructions)
+			{
+				for (int y = instruction.Rectangle.Top; y <= instruction.Rectangle.Bottom; ++y)
+				{
+					for (int x = instruction.Rectangle.Left; x <= instruction.Rectangle.Right; ++x)
+					{
+						switch (instruction.Action)
+						{
+							case Action.Toggle:
+								grid[x, y] += 2; 
+								break;
+							case Action.TurnOff:
+								if (grid[x, y] > 0)
+									grid[x, y] -= 1;
+								break;
+							case Action.TurnOn:
+								grid[x, y] += 1;
+								break;
+						}
+					}
+				}
+			}
+		}
+
+
+		private static int Part1(List<Instruction> instructions)
+		{
 			var grid = new bool[1000, 1000];
 
-			ExecuteInstructions(instructions, grid);
+			ExecuteInstructionsForPart1(instructions, grid);
 
 			int numberOfTurnedOnLights = 0;
 			foreach (var cell in grid)
@@ -49,12 +101,10 @@ namespace _06
 				if (cell)
 					++numberOfTurnedOnLights;
 			}
-
-			Console.WriteLine("Number of lights on: {0}", numberOfTurnedOnLights);
-			Console.ReadLine();
+			return numberOfTurnedOnLights;
 		}
 
-		private static void ExecuteInstructions(List<Instruction> instructions, bool[,] grid)
+		private static void ExecuteInstructionsForPart1(List<Instruction> instructions, bool[,] grid)
 		{
 			foreach (var instruction in instructions)
 			{
