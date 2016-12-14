@@ -12,8 +12,41 @@ namespace Day03
 	{
 		static void Main(string[] args)
 		{
+			var input = File.ReadAllText("input.txt");
+			PartOne(input.Split('\n'));
+			PartTwo(input);
+			Console.ReadLine();
+		}
+
+		private static void PartTwo(string input)
+		{
 			int validCount = 0;
-			foreach (var line in File.ReadAllLines("input.txt"))
+			var sides = input.Split(new[] {' ', '\n'}, StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+			int triangleStride = 9;
+			int sideStride = 3;
+			for (int offset = 0; offset < 3; ++offset)
+			{
+				for (int i = offset; i < sides.Count; i+=triangleStride)
+				{
+					int longest = int.MinValue;
+					int sum = 0;
+					for (int sideIndex = i; sideIndex < i + triangleStride; sideIndex += sideStride)
+					{
+						sum += sides[sideIndex];
+						if (longest < sides[sideIndex])
+							longest = sides[sideIndex];
+					}
+					if (sum - longest > longest)
+						++validCount;
+				}
+			}
+			Console.WriteLine("Valid: {0}", validCount);
+		}
+
+		private static void PartOne(string[] input)
+		{
+			int validCount = 0;
+			foreach (var line in input)
 			{
 				int longest = int.MinValue;
 				int sum = 0;
@@ -28,7 +61,6 @@ namespace Day03
 					++validCount;
 			}
 			Console.WriteLine("Valid triangles: {0}", validCount);
-			Console.ReadLine();
 		}
 	}
 }
