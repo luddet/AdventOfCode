@@ -14,11 +14,11 @@ namespace Day14
 
 		static void Main(string[] args)
 		{
-
 			string salt = "ihaygndm";
 			var md5 = MD5.Create();
 			md5.Initialize();
 
+			int hashToFind = 64;
 			int found = 0;
 			int index = 0;
 			for (; ; ++index)
@@ -27,12 +27,13 @@ namespace Day14
 				var hash = GetHash(salt, index, md5);
 				if (ContainsCharsInARow(hash, 3, out ch))
 				{
+					string fiveChars = new string(ch, 5);
 					for (int i = 1; i <= 1000; ++i)
 					{
 						var nextHash = GetHash(salt, index + i, md5);
-						if (nextHash.Contains(new string(ch, 5)))
+						if (nextHash.Contains(fiveChars))
 						{
-							if (++found == 64)
+							if (++found == hashToFind)
 							{
 								Console.WriteLine("{0}: {1}", index, hash);
 								Console.WriteLine("Next with 5: {0}: {1}", index + i, nextHash);
@@ -40,7 +41,7 @@ namespace Day14
 							}
 						}
 					}
-					if (found == 64)
+					if (found == hashToFind)
 						break;
 				}
 			}
@@ -55,15 +56,22 @@ namespace Day14
 			if (index < s_hashes.Count && s_hashes[index] != null)
 				return s_hashes[index];
 
-			var hash = GetHexString(salt + index, algorithm);
-			s_hashes.Add(hash);
-			return hash;
+			if (index % 100 == 0)
+				Console.WriteLine("Calculating hash: {0}", index);
+
+			string hashInput = salt + index;
+			var hash = algorithm.ComputeHash(Encoding.ASCII.GetBytes(hashInput));
+			for (int i = 0; i < 2016; ++i)
+				hash = algorithm.ComputeHash(Encoding.ASCII.GetBytes(GetHexString(hash)));
+
+			var hashstring = GetHexString(hash);
+			s_hashes.Add(hashstring);
+			return hashstring;
 		}
 
-		public static string GetHexString(string input, HashAlgorithm algorithm)
+		public static string GetHexString(byte[] input)
 		{
-			var hash = algorithm.ComputeHash(Encoding.ASCII.GetBytes(input), 0, input.Length);
-			return BitConverter.ToString(hash).Replace("-", "");
+			return BitConverter.ToString(input).Replace("-", "").ToLower();
 		}
 
 		public static bool ContainsCharsInARow(string input, int numberToLookFor, out char chr)
@@ -109,7 +117,8 @@ namespace Day14
 			md5.Initialize();
 
 			string input = "abc18";
-			string result = Program.GetHexString(input, md5);
+			byte[] hash = md5.ComputeHash(Encoding.ASCII.GetBytes(input));
+			string result = Program.GetHexString(hash);
 			
 			Assert.That(result.Contains("888"), result);
 		}
