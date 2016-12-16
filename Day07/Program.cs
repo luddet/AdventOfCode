@@ -16,18 +16,19 @@ namespace Day07
 
 		// matchar ABBA som har [] runt sig
 		private static readonly Regex s_bracketedAbbaMatcher = new Regex(@"(?<=\[\w*)(\w)(?!\1)(\w)\2\1(?=\w*\])", RegexOptions.Compiled);
-		private static readonly Regex s_sslMatcher = new Regex(@"\[\w*(\w)(?!\1)(\w)\1\w*\].*?\2\1\2|(\w)(?!\3)(\w)\3.*?\[[^]]*\4\3\4.*\]", RegexOptions.Compiled);
+
+		private static readonly Regex s_sslMatcher = new Regex(@"(?<!\[\w*)(\w)(?!\1)(\w)\1.*\[\w*\2\1\2\w*\]|\[\w*(\w)(?!\3)(\w)\3\w*\].*(?<!\[\w*)\4\3\4",
+			RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace);
 
 		static void Main(string[] args)
 		{
 			var input = File.ReadAllLines("input.txt");
+			Console.WriteLine("Number of items: {0}", input.Length);
 
-			var count = input.Count(line => s_abbaMatcher.IsMatch(line) && !s_bracketedAbbaMatcher.IsMatch(line));
-			int sslCount = 0;
-			foreach (var line in input.Where(line => s_sslMatcher.IsMatch(line)))
-				++sslCount;
+			var abbaCount = input.Count(line => s_abbaMatcher.IsMatch(line) && !s_bracketedAbbaMatcher.IsMatch(line));
+			var sslCount = input.Count(line => s_sslMatcher.IsMatch(line));
 
-			Console.WriteLine(count);
+			Console.WriteLine("abbaCount: {0}", abbaCount);
 			Console.WriteLine("sslcount: {0}", sslCount);
 			Console.ReadLine();
 		}
