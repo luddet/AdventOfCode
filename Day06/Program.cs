@@ -71,17 +71,22 @@ namespace Day06
 				.Select(int.Parse)
 				.ToArray();
 
-			var previousConfigurations = new HashSet<Memory<int>>();
+			var previousConfigurations = new Dictionary<Memory<int>, int>();
 			var banks = new Memory<int>(input);
 			int steps = 0;
+			bool foundPrev;
+			int prev;
 			do
 			{
 				var max = GetMaxBank(banks);
 				Redistribute(max, banks);
 				++steps;
+				if (! (foundPrev = previousConfigurations.TryGetValue(banks, out prev)))
+					previousConfigurations.Add(new Memory<int>(banks), steps);
 			}
-			while (previousConfigurations.Add(new Memory<int>(banks)));
+			while (!foundPrev);
 			Console.WriteLine("Part 1 - Steps: " + steps);
+			Console.WriteLine("Part 2 - Loopsize: " + (steps - prev));
 			Console.WriteLine("Done");
 			Console.ReadLine();
 
