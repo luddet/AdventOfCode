@@ -19,7 +19,8 @@ namespace Day08
 			"c inc -20 if c == 10"
 		};
 
-		private static Dictionary<string, int> s_registers = new Dictionary<string, int>();
+		private static readonly Dictionary<string, int> s_registers = new Dictionary<string, int>();
+		private static int s_allTimeHigh = int.MinValue;
 
 		static void Main(string[] args)
 		{
@@ -31,6 +32,7 @@ namespace Day08
 			var max = s_registers.Values.Max();
 
 			Console.WriteLine($"Part 1: {max}");
+			Console.WriteLine($"Part 2: {s_allTimeHigh}");
 			Console.ReadLine();
 
 		}
@@ -80,6 +82,8 @@ namespace Day08
 		private static void SetRegister(string register, int value)
 		{
 			s_registers[register] = value;
+			if (value > s_allTimeHigh)
+				s_allTimeHigh = value;
 		}
 
 		private static bool CheckCondition(int value1, string op, int value2)
@@ -100,9 +104,7 @@ namespace Day08
 					return value1 >= value2;
 				default:
 					throw new ArgumentException($"Unsupported operator: {op}", nameof(op));
-
 			}
-			return false;
 		}
 	}
 
