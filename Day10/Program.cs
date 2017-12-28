@@ -12,57 +12,49 @@ namespace Day10
 	{
 		static void Main(string[] args)
 		{
-			var input = File.ReadAllText("input.txt").Split(',').Select(int.Parse).ToArray();
-			var hash = new Hasher().Hash(input);
+			var input = File.ReadAllText("input.txt").Split(',').Select(Int32.Parse).ToArray();
+			var hash = Hash(input);
 
 			Console.WriteLine($"Part 1: {hash}");
 			Console.ReadLine();
 		}
-	}
 
-	class Hasher
-	{
-		private int[] m_buffer;
-
-		public Hasher(int bufferSize = 256)
-		{
-			m_buffer = new int[bufferSize];
-			for (var i = 0; i < bufferSize; ++i)
-				m_buffer[i] = i;
-		}
-
-		public int Hash(int[] seed)
+		public static int Hash(int[] seed, int bufferSize = 256)
 		{
 			int pos = 0;
 			int skip = 0;
+
+			var buffer = new int[bufferSize];
+			for (var i = 0; i < bufferSize; ++i)
+				buffer[i] = i;
+
 
 			foreach (var length in seed)
 			{
 				var lastIndex = pos + length - 1;
 				for (int i = 0; i < length/2; ++i)
 				{
-					var tmp = m_buffer[(pos + i) % m_buffer.Length];
-					m_buffer[(pos + i) % m_buffer.Length] = m_buffer[(lastIndex - i) % m_buffer.Length];
-					m_buffer[(lastIndex - i) % m_buffer.Length] = tmp;
+					var tmp = buffer[(pos + i) % buffer.Length];
+					buffer[(pos + i) % buffer.Length] = buffer[(lastIndex - i) % buffer.Length];
+					buffer[(lastIndex - i) % buffer.Length] = tmp;
 				}
 
-				pos = (pos + length + skip) % m_buffer.Length;
+				pos = (pos + length + skip) % buffer.Length;
 				++skip;
 			}
 
-			return m_buffer[0] * m_buffer[1];
+			return buffer[0] * buffer[1];
 		}
 	}
 
 	[TestFixture]
-	class HasherTests
+	class Tests
 	{
 		[Test]
 		public void Hash_ReturnsCorrectHash()
 		{
 			var seed = new[] { 3, 4, 1, 5 };
-			var hasher = new Hasher(5);
-			var hash = hasher.Hash(seed);
+			var hash = Program.Hash(seed,5);
 			Assert.That(hash, Is.EqualTo(12));
 		}
 	}
