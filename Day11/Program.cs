@@ -18,15 +18,22 @@ namespace Day11
 							.Trim()
 							.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
 
-			var distance = CalculateDistance(input);
+			var distance = CalculateDistance(input, out int furthestDistance);
 
 			Console.WriteLine($"Part 1: {distance}");
+			Console.WriteLine($"Part 2: {furthestDistance}");
 			Console.ReadLine();
 
 		}
 
-		public static int CalculateDistance(IEnumerable<string> steps)
+		public static int CalculateDistance(IEnumerable<string> steps, out int furthestDistance)
 		{
+			//  Y\         
+			//    \_____
+			//    /    X
+			//   /Z
+
+			furthestDistance = 0;
 			var pos = new HexCoord(0,0,0);
 			foreach (var step in steps)
 			{
@@ -53,6 +60,8 @@ namespace Day11
 					default:
 						throw new ApplicationException("Unhandled direction: " + step);
 				}
+			
+				furthestDistance = Math.Max(pos.Length, furthestDistance);
 			}
 
 			return pos.Length;
@@ -98,7 +107,7 @@ namespace Day11
 		public void CalculateDistance(Tuple<string[], int> input)
 		{
 			var expectedResult = input.Item2;
-			var result = Program.CalculateDistance(input.Item1);
+			var result = Program.CalculateDistance(input.Item1, out int _);
 
 			Assert.That(result, Is.EqualTo(expectedResult), "input: " + string.Join(",", input.Item1));
 			
