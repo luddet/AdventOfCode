@@ -36,7 +36,7 @@ namespace Day10
 		}
 	}
 
-	class Hasher
+	public class Hasher
 	{
 		private static readonly int[] s_suffix = {17, 31, 73, 47, 23};
 		private readonly int[] m_buffer;
@@ -46,7 +46,12 @@ namespace Day10
 		public Hasher(int size = 256)
 		{
 			m_buffer = new int[size];
-			for (var i = 0; i < size; ++i)
+			Reset();
+		}
+
+		public void Reset()
+		{
+			for (var i = 0; i < m_buffer.Length; ++i)
 				m_buffer[i] = i;
 
 			m_pos = 0;
