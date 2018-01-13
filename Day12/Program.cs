@@ -51,38 +51,47 @@ namespace Day12
 
 	}
 
-	class UnionFind
+	public class UnionFind
 	{
 		private readonly int[] m_ids;
 
-		public UnionFind(int size)
+		public UnionFind(int size, bool initializeAllComponents = true)
 		{
 			m_ids = new int[size];
 			for (int i = 0; i < size; ++i)
-				m_ids[i] = i;
+				m_ids[i] = initializeAllComponents ? i : -1;
 		}
 
 		public void Union(int a, int b)
 		{
-			if (m_ids[a] == m_ids[b])
+			if (m_ids[a] != -1 && m_ids[b] != -1 && m_ids[a] == m_ids[b])
 				return;
 
-			int seta = m_ids[a];
-			int setb = m_ids[b];
+			int seta = m_ids[a] != -1 ? m_ids[a] : a;
+			bool bNotInitialized = m_ids[b] == -1;
+			int setb = bNotInitialized ? b : m_ids[b];
 
-			for (int i = 0; i < m_ids.Length; ++i)
-				if (m_ids[i] == setb)
-					m_ids[i] = seta;
+			if (bNotInitialized)
+			{
+				m_ids[a] = seta;
+				m_ids[b] = seta;
+			}
+			else
+			{
+				for (int i = 0; i < m_ids.Length; ++i)
+					if (m_ids[i] == setb)
+						m_ids[i] = seta;
+			}
 		}
 
 		public bool Connected(int a, int b)
 		{
-			return m_ids[a] == m_ids[b];
+			return m_ids[a] != -1 && m_ids[b] != -1 && m_ids[a] == m_ids[b];
 		}
 
 		public int Count()
 		{
-			return m_ids.Distinct().Count();
+			return m_ids.Distinct().Count(id => id != -1);
 		}
 	}
 
@@ -94,6 +103,21 @@ namespace Day12
 		{
 			var uf = new UnionFind(2);
 			Assert.That(uf.Count(), Is.EqualTo(2));
+		}
+
+		[Test]
+		public void Count_ZeroWhenCreatedWithoutInitializing()
+		{
+			var uf = new UnionFind(2, false);
+			Assert.That(uf.Count(), Is.EqualTo(0));
+		}
+
+		[Test]
+		public void Count_OneWhenCreatedWithoutInitializingAfterOneUnion()
+		{
+			var uf = new UnionFind(3, false);
+			uf.Union(1,2);
+			Assert.That(uf.Count(), Is.EqualTo(1));
 		}
 
 		[Test]
@@ -129,6 +153,23 @@ namespace Day12
 			uf.Union(0, 1);
 			var result = uf.Connected(1, 2);
 			Assert.That(result, Is.False);
+		}
+
+		[Test]
+		public void Connected_NotInitializedAndNotUnioned_ReturnsFalse()
+		{
+			var uf = new UnionFind(3, false);
+			var result = uf.Connected(1, 2);
+			Assert.That(result, Is.False);
+		}
+
+		[Test]
+		public void Connected_NotInitialized_PairUnioned_ReturnsTrue()
+		{
+			var uf = new UnionFind(3, false);
+			uf.Union(1, 2);
+			var result = uf.Connected(1, 2);
+			Assert.That(result, Is.True);
 		}
 
 	}

@@ -57,6 +57,10 @@
       <Project>{225ec373-b930-4641-9f6d-9145494ddbb2}</Project>
       <Name>Day10</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Day12\Day12.csproj">
+      <Project>{5dc444bc-a919-45ba-85eb-8aea3fabf7ce}</Project>
+      <Name>Day12</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
