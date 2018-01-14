@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,42 +27,165 @@ namespace Day16
 			'e'
 		};
 
+		private interface IOperation
+		{
+			void Execute(DanceContext context);
+		}
+
+		private class SpinOperation : IOperation
+		{
+			private readonly int m_steps;
+
+			public SpinOperation(int steps)
+			{
+				m_steps = steps;
+			}
+
+			public void Execute(DanceContext context)
+			{
+				context.Spin = (context.Spin + m_steps) % context.Buffer.Length;
+			}
+		}
+
+		private class ExchangeOperation : IOperation
+		{
+			private readonly int m_b;
+			private readonly int m_a;
+
+			public ExchangeOperation(int a, int b)
+			{
+				m_a = a;
+				m_b = b;
+			}
+
+			public void Execute(DanceContext context)
+			{
+				var indexA = (m_a - context.Spin + context.Buffer.Length) % context.Buffer.Length;
+				var indexB = (m_b - context.Spin + context.Buffer.Length) % context.Buffer.Length;
+
+				var tmp = context.Buffer[indexA];
+				context.Buffer[indexA] = context.Buffer[indexB];
+				context.Buffer[indexB] = tmp;
+			}
+		}
+
+		private class PartnerOperation : IOperation
+		{
+			private readonly char m_a;
+			private readonly char m_b;
+
+			public PartnerOperation(char a, char b)
+			{
+				m_a = a;
+				m_b = b;
+			}
+
+			public void Execute(DanceContext context)
+			{
+				int aIndex = -1;
+				int bIndex = -1;
+				for (int i = 0; i < context.Buffer.Length; ++i)
+				{
+					if (context.Buffer[i] == m_a)
+					{
+						aIndex = i;
+						if (bIndex != -1)
+							break;
+					}
+					else if (context.Buffer[i] == m_b)
+					{
+						bIndex = i;
+						if (aIndex != -1)
+							break;
+					}
+				}
+
+				var tmp = context.Buffer[aIndex];
+				context.Buffer[aIndex] = context.Buffer[bIndex];
+				context.Buffer[bIndex] = tmp;
+			}
+		}
+
+		private class DanceContext
+		{
+			public DanceContext(char[] buffer)
+			{
+				Buffer = new char[buffer.Length];
+				buffer.CopyTo(Buffer, 0);
+				Spin = 0;
+			}
+
+			public int Spin { get; set; }
+			public readonly char[] Buffer;
+		}
+
 		static void Main(string[] args)
 		{
 			var buffer = new char[16] {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p'};
-
 			var input = File.ReadAllText("input.txt").Split(new []{','}, StringSplitOptions.RemoveEmptyEntries);
-
+			
 //			buffer = s_testBuffer;
 //			input = s_testInput;
 
+			var context = new DanceContext(buffer);
+
+			var firstBufferState = new char[buffer.Length];
+			var operations = ParseOperations(input);
+
+			var iterations = 1000000000;
+//			iterations = 2;
+			for (int i = 0; i < iterations; ++i)
+			{
+				foreach (var operation in operations)
+					operation.Execute(context);
+
+				if (i == 0)
+				{
+					context.Buffer.CopyTo(firstBufferState, 0);
+					RotateBuffer(context.Spin, firstBufferState);
+				}
+
+				if (i % 100000 == 0)
+				{
+					Console.WriteLine($"{100*(float)i/iterations}%");
+				}
+			}
+
+			RotateBuffer(context.Spin, context.Buffer);
+			
+			Console.WriteLine($"Part 1: {string.Join("", firstBufferState)}");
+			Console.WriteLine($"Part 2: {string.Join("", context.Buffer)}");
+			Console.ReadLine();
+		}
+
+		private static List<IOperation> ParseOperations(string[] input)
+		{
+			var operations = new List<IOperation>();
 			foreach (var instruction in input)
 			{
 				switch (instruction[0])
 				{
 					case 's':
-						Spin(int.Parse(instruction.Substring(1)), buffer);
+						var newSpin = int.Parse(instruction.Substring(1));
+						operations.Add(new SpinOperation(newSpin));
 						break;
 					case 'x':
 						var digits = instruction.Substring(1).Split('/');
 						var a = int.Parse(digits[0]);
 						var b = int.Parse(digits[1]);
-						Exchange(a, b, buffer);
+						operations.Add(new ExchangeOperation(a, b));
 						break;
 					case 'p':
-						Partner(instruction[1], instruction[3], buffer);
+						operations.Add(new PartnerOperation(instruction[1], instruction[3]));
 						break;
 					default:
 						throw new ApplicationException("Unknown instruction: " + instruction);
 				}
-
 			}
-
-			Console.WriteLine($"Part 1: {string.Join("", buffer)}");
-			Console.ReadLine();
+			return operations;
 		}
 
-		private static void Spin(int steps, char[] buffer)
+		private static void RotateBuffer(int steps, char[] buffer)
 		{
 			var bufferSize = buffer.Length;
 
@@ -70,39 +194,6 @@ namespace Day16
 
 			for (int i = 0; i < bufferSize; ++i)
 				buffer[(i + steps) % bufferSize] = temp[i];
-		}
-
-		private static void Exchange(int a, int b, char[] buffer)
-		{
-			var tmp = buffer[a];
-			buffer[a] = buffer[b];
-			buffer[b] = tmp;
-
-		}
-
-		private static void Partner(char a, char b, char[] buffer)
-		{
-			int aIndex = -1;
-			int bIndex = -1;
-			for (int i = 0; i < buffer.Length; ++i)
-			{
-				if (buffer[i] == a)
-				{
-					aIndex = i;
-					if (bIndex != -1)
-						break;
-				}
-				else if (buffer[i] == b)
-				{
-					bIndex = i;
-					if (aIndex != -1)
-						break;
-				}
-			}
-
-			var tmp = buffer[aIndex];
-			buffer[aIndex] = buffer[bIndex];
-			buffer[bIndex] = tmp;
 		}
 	}
 }
