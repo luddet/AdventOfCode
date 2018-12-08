@@ -52,7 +52,7 @@ namespace Day03
 	{
 		static void Main(string[] args)
 		{
-			var claims = File.ReadAllLines("input.txt").Select(Claim.Parse);
+			var claims = File.ReadAllLines("input.txt").Select(Claim.Parse).ToArray();
 			const int SHEET_SIZE = 1000;
 			var grid = new byte[SHEET_SIZE, SHEET_SIZE];
 			int multiClaimCount = 0;
@@ -69,7 +69,31 @@ namespace Day03
 				}
 			}
 
+			Claim? nonOverlapping = null;
+			foreach (var claim in claims)
+			{
+				bool overlap = false;
+
+				for (var x = claim.X; x < claim.X + claim.Width; ++x)
+				{
+					for (var y = claim.Y; y < claim.Y + claim.Height; ++y)
+					{
+						if (grid[x, y] > 1)
+						{
+							overlap = true;
+							break;
+						}
+					}
+					if (overlap)
+						break;
+				}
+
+				if (!overlap)
+					nonOverlapping = claim;
+			}
+
 			Console.WriteLine($"Day03 part 1: {multiClaimCount}");
+			Console.WriteLine($"Day03 part 2: {nonOverlapping?.Id}");
 			Console.ReadLine();
 		}
 	}
