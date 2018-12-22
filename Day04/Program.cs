@@ -89,14 +89,12 @@ namespace Day04
 
 		public static uint FindMostSleptMinute(IEnumerable<GuardShift> shifts)
 		{
-			var acc = new uint[60];
-			foreach (var shift in shifts)
-			{
-				for (var i = 0; i < 60; ++i)
-					if (!shift.Awake[i])
-						++acc[i];
-			}
+			var acc = CreateSleepHistogram(shifts);
+			return FindMaxIndex(acc);
+		}
 
+		public static uint FindMaxIndex(uint[] acc)
+		{
 			uint maxIndex = 0;
 			uint maxValue = uint.MinValue;
 			for (uint i = 0; i < 60; ++i)
@@ -107,6 +105,18 @@ namespace Day04
 				}
 
 			return maxIndex;
+		}
+
+		public static uint[] CreateSleepHistogram(IEnumerable<GuardShift> shifts)
+		{
+			var acc = new uint[60];
+			foreach (var shift in shifts)
+			{
+				for (var i = 0; i < 60; ++i)
+					if (!shift.Awake[i])
+						++acc[i];
+			}
+			return acc;
 		}
 
 		public readonly DateTime DateTime;
@@ -141,11 +151,22 @@ namespace Day04
 
 			var shifts = GuardShift.ParseShifts(input);
 
+			// Part 1
 			var sleepPerGuard = GuardShift.GetTotalSleepTimesPerGuard(shifts);
 			uint sleepiestGuard = GuardShift.FindSleepiestGuard(sleepPerGuard);
 			var mostSleptMinute = GuardShift.FindMostSleptMinute(shifts.Where(shift => shift.GuardId == sleepiestGuard));
 			var result1 = sleepiestGuard * mostSleptMinute;
+
+			// Part 2
+			Dictionary<uint, uint[]> guardToHistogramMap = shifts.GroupBy(shift => shift.GuardId)
+				.ToDictionary(group => group.Key, group => GuardShift.CreateSleepHistogram(group.AsEnumerable()));
+			var guardWithMostSleptMinute = guardToHistogramMap.Select(i => new {GuardId = i.Key, MaxSleptMinute = GuardShift.FindMaxIndex(i.Value), MaxSleptValue = i.Value.Max()})
+				.Aggregate( (a,b) => a.MaxSleptValue > b.MaxSleptValue ? a : b);
+			var result2 = guardWithMostSleptMinute.GuardId * guardWithMostSleptMinute.MaxSleptMinute;
+
+
 			Console.WriteLine($"Day04 part 1: {result1}");
+			Console.WriteLine($"Day04 part 2: {result2}");
 			Console.ReadLine();
 
 		}
