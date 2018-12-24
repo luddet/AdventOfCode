@@ -111,7 +111,7 @@ namespace Day05
 
 				var currentChar = str[i];
 				var nextChar = str[i + 1];
-
+					
 				if (char.ToLower(currentChar) != char.ToLower(nextChar)
 					|| (char.IsLower(currentChar) && char.IsLower(nextChar))
 					|| (char.IsUpper(currentChar) && char.IsUpper(nextChar)))
@@ -137,10 +137,25 @@ namespace Day05
 		{
 			var input = File.ReadAllText("input.txt").Trim();
 
-			string part1Result = input;
-			while (part1Result.EatMatches(out part1Result)) {}
+			string tempResult = input;
+			while (tempResult.EatMatches(out tempResult)) {}
+			var part1Result = tempResult.Length;
 
-			Console.WriteLine($"Day05 Part 1: {part1Result.Length}");
+
+			var part2Result = int.MaxValue;
+			for (char ch = 'a'; ch < 'z'; ++ch)
+			{
+				tempResult = input.Replace(ch.ToString(), "").Replace(char.ToUpper(ch).ToString(), "");
+				
+				while (tempResult.EatMatches(out tempResult)) { }
+
+				if (part2Result > tempResult.Length)
+					part2Result = tempResult.Length;
+			}
+
+
+			Console.WriteLine($"Day05 Part 1: {part1Result}");
+			Console.WriteLine($"Day05 Part 2: {part2Result}");
 			Console.ReadLine();
 
 
