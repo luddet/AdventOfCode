@@ -1,5 +1,29 @@
-// Day01.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// https://adventofcode.com/2019/day/1
 //
+//-- - Day 1: The Tyranny of the Rocket Equation-- -
+//Santa has become stranded at the edge of the Solar System while delivering presents to other planets!To accurately calculate
+// his position in space, safely align his warp drive, and return to Earth in time to save Christmas, he needs you to bring him measurements from fifty stars.
+//
+//Collect stars by solving puzzles.Two puzzles will be made available on each day in the Advent calendar; the second puzzle is
+//unlocked when you complete the first.Each puzzle grants one star.Good luck!
+//
+//The Elves quickly load you into a spacecraftand prepare to launch.
+//
+//At the first Go / No Go poll, every Elf is Go until the Fuel Counter - Upper.They haven't determined the amount of fuel required yet.
+//
+//Fuel required to launch a given module is based on its mass.Specifically, to find the fuel required for a module, take its mass,
+//divide by three, round down, and subtract 2.
+//
+//For example :
+//
+//For a mass of 12, divide by 3 and round down to get 4, then subtract 2 to get 2.
+//For a mass of 14, dividing by 3 and rounding down still yields 4, so the fuel required is also 2.
+//For a mass of 1969, the fuel required is 654.
+//For a mass of 100756, the fuel required is 33583.
+//The Fuel Counter - Upper needs to know the total fuel requirement.To find it, individually calculate the fuel needed for the mass of
+//each module(your puzzle input), then add together all the fuel values.
+//
+//What is the sum of the fuel requirements for all of the modules on your spacecraft ?
 
 #include <iostream>
 
@@ -8,13 +32,3 @@ int main()
     std::cout << "Hello World!\n";
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
