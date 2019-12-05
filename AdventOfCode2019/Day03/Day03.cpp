@@ -26,6 +26,12 @@ int length(const Coord& coord)
 	return std::abs(coord.x) + std::abs(coord.y);
 }
 
+int length(const Line& line)
+{
+	return std::abs(line.end.x - line.start.x) + std::abs(line.end.y - line.start.y);
+}
+
+
 bool intersects(const Line& line1, const Line& line2, Coord& intersecionPoint)
 {
 	int minX1 = std::min(line1.start.x, line1.end.x);
@@ -83,7 +89,6 @@ std::vector<Line> parseLine(std::string& line)
 int main()
 {
 	std::ifstream fs("input.txt");
-
 	std::string line1, line2;
 	std::getline(fs, line1);
 	std::getline(fs, line2);
@@ -93,16 +98,31 @@ int main()
 	wire2 = parseLine(line2);
 
 	int closestDistance = INT_MAX;
+	int leastSteps = INT_MAX;
+	int wire1TotalSteps = 0;
 	for (size_t i = 0; i < wire1.size(); ++i)
 	{
+		int wire2TotalSteps = 0;
 		for (size_t j = 0; j < wire2.size(); ++j)
 		{
 			Coord intersection;
-			if (intersects(wire1[i], wire2[j], intersection))
+			// don't check origin segments for intersections
+			if ((i != 0 || j != 0) && intersects(wire1[i], wire2[j], intersection))
+			{
 				closestDistance = std::min(closestDistance, length(intersection));
+
+				// delta from each wire segments start point to the intersection
+				Coord w1delta{ intersection.x - wire1[i].start.x, intersection.y - wire1[i].start.y };
+				Coord w2delta{ intersection.x - wire2[j].start.x, intersection.y - wire2[j].start.y };
+
+				leastSteps = std::min(leastSteps, wire1TotalSteps + wire2TotalSteps + length(w1delta) + length(w2delta));
+			}
+			wire2TotalSteps += length(wire2[j]);
 		}
+		wire1TotalSteps += length(wire1[i]);
 	}
 
 	std::cout << "Part 1: " << closestDistance << std::endl;
+	std::cout << "Part 2: " << leastSteps << std::endl;
 }
 
