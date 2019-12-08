@@ -20,27 +20,55 @@ int runProgram(std::vector<int>& program, int input)
 		int param1Value, param2Value;
 		switch (opCode)
 		{
-		case 1:
+		case 1: // ADD
 			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
 			param2Value = mode[1] == 0 ? program[program[ip + 2]] : program[ip + 2];
 			program[program[ip + 3]] = param1Value + param2Value;
 			ip += 4;
 			break;
-		case 2:
+		case 2: // MUL
 			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
 			param2Value = mode[1] == 0 ? program[program[ip + 2]] : program[ip + 2];
 			program[program[ip + 3]] = param1Value * param2Value;
 			ip += 4;
 			break;
-		case 3:
+		case 3: // READ INPUT
 			program[program[ip + 1]] = input;
 			ip += 2;
 			break;
-		case 4:
+		case 4: // OUTPUT
 			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
 			output = param1Value;
 //			std::cout << output << std::endl;
 			ip += 2;
+			break;
+		case 5: // JUMP IF TRUE
+			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
+			param2Value = mode[1] == 0 ? program[program[ip + 2]] : program[ip + 2];
+			if (param1Value != 0)
+				ip = param2Value;
+			else
+				ip += 3;
+			break;
+		case 6: // JUMP IF FALSE
+			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
+			param2Value = mode[1] == 0 ? program[program[ip + 2]] : program[ip + 2];
+			if (param1Value == 0)
+				ip = param2Value;
+			else
+				ip += 3;
+			break;
+		case 7: // LESS THAN
+			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
+			param2Value = mode[1] == 0 ? program[program[ip + 2]] : program[ip + 2];
+			program[program[ip + 3]] = (param1Value < param2Value) ? 1 : 0;
+			ip += 4;
+			break;
+		case 8: // EQUALS
+			param1Value = mode[2] == 0 ? program[program[ip + 1]] : program[ip + 1];
+			param2Value = mode[1] == 0 ? program[program[ip + 2]] : program[ip + 2];
+			program[program[ip + 3]] = (param1Value == param2Value) ? 1 : 0;
+			ip += 4;
 			break;
 		case 99:
 			break;
@@ -69,14 +97,14 @@ int main()
 	std::ifstream fs("input.txt");
 	std::vector<int> originalMemory(readInput(fs));
 
-	std::stringstream teststream("3,0,4,0,99");
-	std::vector<int> testMemory(readInput(teststream));
-
 	std::vector<int> part1Memory(originalMemory);
+	std::vector<int> part2Memory(originalMemory);
 	
-	int diagnosticsCode = runProgram(part1Memory, 1);
+	int diagnosticsCode1 = runProgram(part1Memory, 1);
+	int diagnosticsCode2 = runProgram(part2Memory, 5);
 
-	std::cout << "From output: " << diagnosticsCode << std::endl;
+	std::cout << "Part 1: " << diagnosticsCode1 << std::endl;
+	std::cout << "Part 2: " << diagnosticsCode2 << std::endl;
 
 }
 
