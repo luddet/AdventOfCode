@@ -99,6 +99,13 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>lib /NOLOGO /OUT:"$(TargetPath).lib" "$(ProjectDir)$(PlatformTarget)\$(Configuration)\*.obj"
+lib /NOLOGO "$(TargetPath).lib" /REMOVE:"$(ProjectDir)$(PlatformTarget)\$(Configuration)\Main.obj"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Build static lib</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

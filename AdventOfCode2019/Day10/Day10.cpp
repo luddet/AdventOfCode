@@ -46,6 +46,13 @@ point_t reduceByLCD(point_t p)
 	p.first *= signX;
 	p.second *= signY;
 
+	if (p.first == 0 || p.second == 0)
+	{
+		p.first = signX;
+		p.second = signY;
+		return p;
+	}
+
 	int i = 2;
 	while (i <= p.first && i <= p.second)
 	{

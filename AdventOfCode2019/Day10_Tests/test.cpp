@@ -110,7 +110,9 @@ INSTANTIATE_TEST_CASE_P(reduceByLCD, ReduceByLCDFixture,
 										  std::make_tuple(Day10::point_t{ 2,2 }, Day10::point_t{ 1,1 }),
 										  std::make_tuple(Day10::point_t{ 2,4 }, Day10::point_t{ 1,2 }),
 										  std::make_tuple(Day10::point_t{ 9,6 }, Day10::point_t{ 3,2 }),
-										  std::make_tuple(Day10::point_t{ -18,6 }, Day10::point_t{ -3,1})
+										  std::make_tuple(Day10::point_t{ -18,6 }, Day10::point_t{ -3,1}),
+										  std::make_tuple(Day10::point_t{ -4,0 }, Day10::point_t{ -1, 0 }),
+										  std::make_tuple(Day10::point_t{ 0,3 }, Day10::point_t{ 0, 1 })
 						));
 
 TEST_P(ReduceByLCDFixture, AllOfThem)
@@ -201,9 +203,35 @@ TEST(reduceToVisible, testInput1)
 {
 	std::istringstream ss(input1);
 	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
-	auto result = Day10::reduceToVisible(asteroids, { 3,4 });
+	auto result = Day10::reduceToVisible(asteroids, input1_best);
 	ASSERT_EQ(result.size(), input1_numberVisible);
 }
+
+TEST(reduceToVisible, testInput2)
+{
+	std::istringstream ss(input2);
+	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
+	auto result = Day10::reduceToVisible(asteroids, input2_best);
+	ASSERT_EQ(result.size(), input2_numberVisible);
+}
+
+TEST(reduceToVisible, testInput3)
+{
+	std::istringstream ss(input3);
+	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
+	auto result = Day10::reduceToVisible(asteroids, input3_best);
+	ASSERT_EQ(result.size(), input3_numberVisible);
+}
+
+TEST(reduceToVisible, testInput4)
+{
+	std::istringstream ss(input4);
+	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
+	auto result = Day10::reduceToVisible(asteroids, input4_best);
+	ASSERT_EQ(result.size(), input4_numberVisible);
+}
+
+
 
 TEST(reduceToVisible, testInput5)
 {
