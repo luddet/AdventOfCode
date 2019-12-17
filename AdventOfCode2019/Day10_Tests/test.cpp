@@ -5,7 +5,7 @@
 #include "..\Day10\Day10.h"
 #include "..\Day10\CoordinateGenerator.h"
 
-std::pair<int, int> input1_best(3, 4);
+Day10::point_t input1_best{3, 4};
 int input1_numberVisible = 8;
 const char* input1 = 
 ".#..#\n"
@@ -14,7 +14,7 @@ const char* input1 =
 "....#\n"
 "...##";
 
-std::pair<int, int> input2_best(5, 8);
+Day10::point_t input2_best{5, 8};
 int input2_numberVisible = 33;
 const char* input2 =
 "......#.#.\n"
@@ -28,7 +28,7 @@ const char* input2 =
 "##...#..#.\n"
 ".#....####";
 
-std::pair<int, int> input3_best(1,2);
+Day10::point_t input3_best{1,2};
 int input3_numberVisible = 35;
 const char* input3 =
 "#.#...#.#.\n"
@@ -42,7 +42,7 @@ const char* input3 =
 "......#...\n"
 ".####.###.";
 
-std::pair<int, int> input4_best(6,3);
+Day10::point_t input4_best{6,3};
 int input4_numberVisible = 41;
 const char* input4 =
 ".#..#..###\n"
@@ -56,7 +56,7 @@ const char* input4 =
 ".##...##.#\n"
 ".....#.#..";
 
-std::pair<int, int> input5_best(11, 13);
+Day10::point_t input5_best{11, 13};
 int input5_numberVisible = 210;
 const char* input5 =
 ".#..##.###...#######\n"
@@ -127,46 +127,46 @@ TEST_P(ReduceByLCDFixture, AllOfThem)
 
 TEST(CoordinateGenerator, getNext_ZeroOrigin)
 {
-	Day10::CoordinateGenerator gen({ 0,0 });
+	Day10::CoordinateGenerator gen(Day10::point_t{ 0,0 });
 
 	Day10::point_t p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t( 1, 0 ));
+	ASSERT_EQ(p, (Day10::point_t{ 1, 0 }));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(1, 1));
+	ASSERT_EQ(p, (Day10::point_t{1, 1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(0, 1));
+	ASSERT_EQ(p, (Day10::point_t{0, 1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(-1, 1));
+	ASSERT_EQ(p, (Day10::point_t{-1, 1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(-1, 0));
+	ASSERT_EQ(p, (Day10::point_t{-1, 0}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(-1, -1));
+	ASSERT_EQ(p, (Day10::point_t{-1, -1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(0, -1));
+	ASSERT_EQ(p, (Day10::point_t{0, -1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(1, -1));
+	ASSERT_EQ(p, (Day10::point_t{1, -1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(2, -1));
+	ASSERT_EQ(p, (Day10::point_t{2, -1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(2, 0));
+	ASSERT_EQ(p, (Day10::point_t{2, 0}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(2, 1));
+	ASSERT_EQ(p, (Day10::point_t{2, 1}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(2, 2));
+	ASSERT_EQ(p, (Day10::point_t{2, 2}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(1, 2));
+	ASSERT_EQ(p, (Day10::point_t{1, 2}));
 }
 
 TEST(CoordinateGenerator, getNext_NonZeroOrigin)
@@ -174,13 +174,13 @@ TEST(CoordinateGenerator, getNext_NonZeroOrigin)
 	Day10::CoordinateGenerator gen({ 2, -3 });
 
 	Day10::point_t p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(3, -3));
+	ASSERT_EQ(p, (Day10::point_t{3, -3}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(3, -2));
+	ASSERT_EQ(p, (Day10::point_t{3, -2}));
 
 	p = gen.getNext();
-	ASSERT_EQ(p, Day10::point_t(2, -2));
+	ASSERT_EQ(p, (Day10::point_t{2, -2}));
 }
 
 TEST(manhattanDistance, SamePoint)
@@ -199,44 +199,54 @@ TEST(manhattanDistance, DifferentPoints)
 	ASSERT_EQ(15, result);
 }
 
-TEST(reduceToVisible, testInput1)
+TEST(countVisible, testInput1)
 {
 	std::istringstream ss(input1);
 	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
-	auto result = Day10::reduceToVisible(asteroids, input1_best);
+	Day10::point_t topLeft, bottomRight;
+	Day10::findBounds(asteroids, topLeft, bottomRight);
+	auto result = Day10::countVisible(asteroids, input1_best, topLeft, bottomRight);
 	ASSERT_EQ(result.size(), input1_numberVisible);
 }
 
-TEST(reduceToVisible, testInput2)
+TEST(countVisible, testInput2)
 {
 	std::istringstream ss(input2);
 	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
-	auto result = Day10::reduceToVisible(asteroids, input2_best);
+	Day10::point_t topLeft, bottomRight;
+	Day10::findBounds(asteroids, topLeft, bottomRight);
+	auto result = Day10::countVisible(asteroids, input2_best, topLeft, bottomRight);
 	ASSERT_EQ(result.size(), input2_numberVisible);
 }
 
-TEST(reduceToVisible, testInput3)
+TEST(countVisible, testInput3)
 {
 	std::istringstream ss(input3);
 	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
-	auto result = Day10::reduceToVisible(asteroids, input3_best);
+	Day10::point_t topLeft, bottomRight;
+	Day10::findBounds(asteroids, topLeft, bottomRight);
+	auto result = Day10::countVisible(asteroids, input3_best, topLeft, bottomRight);
 	ASSERT_EQ(result.size(), input3_numberVisible);
 }
 
-TEST(reduceToVisible, testInput4)
+TEST(countVisible, testInput4)
 {
 	std::istringstream ss(input4);
 	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
-	auto result = Day10::reduceToVisible(asteroids, input4_best);
+	Day10::point_t topLeft, bottomRight;
+	Day10::findBounds(asteroids, topLeft, bottomRight);
+	auto result = Day10::countVisible(asteroids, input4_best, topLeft, bottomRight);
 	ASSERT_EQ(result.size(), input4_numberVisible);
 }
 
 
 
-TEST(reduceToVisible, testInput5)
+TEST(countVisible, testInput5)
 {
 	std::istringstream ss(input5);
 	std::set<Day10::point_t> asteroids = Day10::readAsteroidMap(ss);
-	auto result = Day10::reduceToVisible(asteroids, input5_best);
+	Day10::point_t topLeft, bottomRight;
+	Day10::findBounds(asteroids, topLeft, bottomRight);
+	auto result = Day10::countVisible(asteroids, input5_best, topLeft, bottomRight);
 	ASSERT_EQ(result.size(), input5_numberVisible);
 }

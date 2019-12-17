@@ -4,9 +4,7 @@ namespace Day10
 
 point_t CoordinateGenerator::getNext()
 {
-	m_currentCoordinate.first += m_offsets[(int)m_currentDirection].first;
-	m_currentCoordinate.second += m_offsets[(int)m_currentDirection].second;
-
+	m_currentCoordinate = m_currentCoordinate + m_offsets[(int)m_currentDirection];
 	++m_currentSegmentPosition;
 	if (m_currentSegmentPosition >= m_currentSegmentLength)
 	{
@@ -19,8 +17,6 @@ point_t CoordinateGenerator::getNext()
 		}
 		m_currentDirection = direction_t(((int)m_currentDirection + 1) % (int)direction_t::DIRECTION_COUNT);
 	}
-
-
 	return m_currentCoordinate;
 }
 
