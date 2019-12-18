@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <tuple>
@@ -250,3 +251,4 @@ TEST(countVisible, testInput5)
 	auto result = Day10::countVisible(asteroids, input5_best, topLeft, bottomRight);
 	ASSERT_EQ(result.size(), input5_numberVisible);
 }
+

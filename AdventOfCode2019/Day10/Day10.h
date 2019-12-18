@@ -26,6 +26,8 @@ std::ostream& operator<<(std::ostream& os, const point_t& p);
 int sign(int x);
 
 int manhattanDistance(point_t p1, point_t p2);
+double length(point_t p);
+double angle(point_t p);
 
 // Probably not the most efficient algorithm
 point_t reduceByLCD(point_t p);

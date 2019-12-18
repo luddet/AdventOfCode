@@ -1,9 +1,12 @@
 // https://adventofcode.com/2019/day/10
+#define _USE_MATH_DEFINES // must be defined before anything else potentially includes <cmath>
+
 #include "Day10.h"
 
 #include <functional>
 #include <algorithm>
 #include <string>
+#include <cmath>
 
 namespace Day10
 {
@@ -37,6 +40,17 @@ bool operator<(const point_t lhs, const point_t rhs)
 int manhattanDistance(point_t p1, point_t p2)
 {
 	return std::abs(p2.x - p1.x) + std::abs(p2.y - p1.y);
+}
+
+double length(point_t p)
+{
+	return sqrt(p.x * p.x + p.y * p.y);
+}
+
+double angle(point_t p)
+{
+	double angle = atan2(p.y, p.x);
+	return (angle >= 0) ? angle : angle + 2 * M_PI;
 }
 
 std::ostream& operator<<(std::ostream& os, const point_t& p)
