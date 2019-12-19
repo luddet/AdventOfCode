@@ -1,12 +1,14 @@
 
 #define _USE_MATH_DEFINES // must be defined before anything else potentially includes <cmath>
 #include "Day10.h"
-
+#include <cassert>
 #include <iostream>
 #include <algorithm>
 #include <fstream>
+#include <map>
 #include <set>
 #include <cmath>
+
 
 int main()
 {
@@ -20,43 +22,91 @@ int main()
 	findBounds(asteroids, topLeft, bottomRight);
 
 	int maxVisible = INT_MIN;
+	point_t maxVisiblePoint{};
 	for (auto point : asteroids)
 	{
 		auto visible = countVisible(asteroids, point, topLeft, bottomRight);
-		maxVisible = std::max((int)visible.size(), maxVisible);
+		if ((int)visible.size() > maxVisible)
+		{
+			maxVisible = (int)visible.size();
+			maxVisiblePoint = point;
+		}
 	}
 	std::cout << "Part 1: " << maxVisible << std::endl;
 
-	point_t origin{};
-	auto angleComparer = [&](const point_t& p1, const point_t& p2) 
+	struct lengthComparer_t
 	{
-		point_t op1 = p1 - origin;
-		point_t op2 = p2 - origin;
-		double angle_op1 = -angle(op1) - M_PI_2;
-		double angle_op2 = -angle(op2) - M_PI_2;
-		if (angle_op1 < 0) angle_op1 += 2 * M_PI;
-		if (angle_op2 < 0) angle_op2 += 2 * M_PI;
-
-		return angle_op1 < angle_op2 ? true : (angle_op1 == angle_op2 && length(op1) < length(op2)) ? true : false;
+		bool operator()(const point_t& p1, const point_t& p2) const
+		{
+			return length(p1) < length(p2);
+		}
 	};
 
-	std::set<point_t, decltype(angleComparer)> sortedAsteroids(angleComparer);
+	using sortedAsteroidsSet_t = std::set<point_t, lengthComparer_t>;
+	using sortedAsteroids_t = std::map<double, sortedAsteroidsSet_t>;
+	sortedAsteroids_t sortedAsteroids;
 
-	sortedAsteroids.insert({ 1, 1 });
-	sortedAsteroids.insert({ 1, 0 });
-	sortedAsteroids.insert({ 1, -1 });
-	sortedAsteroids.insert({ -2, -2 });
-	sortedAsteroids.insert({ -1, -1 });
-	sortedAsteroids.insert({ -1, 0 });
-	sortedAsteroids.insert({ -1, 1 });
-	sortedAsteroids.insert({ 0, 2 });
-	sortedAsteroids.insert({ 0, 1 });
-
-
-	for (auto a : sortedAsteroids)
+	auto calculateAngleForSorting = [&](const point_t& p1)
 	{
-		std::cout << a << std::endl;
+		double a = -angle(p1) + M_PI_2;
+		if (a < 0) a += 2 * M_PI;
+		return a;
+	};
+
+	auto flipY = [](const point_t& p)
+	{
+		return point_t{ p.x, -p.y };
+	};
+
+	for (auto t : asteroids)
+	{
+		if (t == maxVisiblePoint)
+			continue;
+
+		double a = calculateAngleForSorting(flipY(t - maxVisiblePoint));
+
+		sortedAsteroidsSet_t* set = nullptr;
+		auto s = sortedAsteroids.find(a);
+		if (s == sortedAsteroids.end())
+		{
+			auto inserted = sortedAsteroids.insert(std::make_pair(a, sortedAsteroidsSet_t{}));
+			set = &inserted.first->second;
+		}
+		else
+		{
+			set = &s->second;
+		}
+
+		set->insert(t);
 	}
+
+	size_t asteroidsDestroyed = 0;
+	point_t lastDestroyed{};
+	while (!sortedAsteroids.empty() && asteroidsDestroyed < 200)
+	{
+		std::vector<double> emptySets;
+		auto pair_it = sortedAsteroids.begin();
+		while (pair_it != sortedAsteroids.end() && asteroidsDestroyed < 200)
+		{
+			auto& set = pair_it->second;
+			assert(!set.empty());
+			auto currentPoint_it = set.begin();
+			lastDestroyed = *currentPoint_it;
+			set.erase(currentPoint_it);
+			if (set.empty())
+				emptySets.push_back(pair_it->first);
+			++asteroidsDestroyed;
+			++pair_it;
+		}
+
+		for (auto a : emptySets)
+			sortedAsteroids.erase(sortedAsteroids.find(a));
+		emptySets.clear();
+	}
+
+	std::cout << "num destroyed: " << asteroidsDestroyed << std::endl;
+	std::cout << "num 200: " << lastDestroyed << std::endl;
+	std::cout << "Part 2: " << lastDestroyed.x * 100 + lastDestroyed.y << std::endl;
 
 }
 
