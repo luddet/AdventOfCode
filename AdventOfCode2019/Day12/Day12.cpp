@@ -80,7 +80,7 @@ int main()
 								  "< x = 5, y = 5, z = 10 >"
 								  "<x = 2, y = -7, z = 3>"
 								  "< x = 9, y = -8, z = -3>");
-	std::istream& is = testStream1;
+	std::istream& is = fs;
 	vector_t v;
 	while (is >> v)
 	{
@@ -191,16 +191,25 @@ int main()
 
 	assert(periodX > 0 && periodY > 0 && periodZ > 0);
 
-	std::cout << "periodX: " << periodX << std::endl;
-	std::cout << "periodY: " << periodY << std::endl;
-	std::cout << "periodZ: " << periodZ << std::endl;
+	// divide by common factors
+	{
+		size_t factor = 2;
+		while (factor < periodX / factor && factor < periodY / factor && factor < periodZ /factor)
+		{
+			while (periodX % factor == 0 && periodY % factor == 0 && periodZ % factor == 0)
+			{
+				periodX /= factor;
+				periodY /= factor;
+				periodZ /= factor;
+			}
 
-	// factor each period
-	// remove common factors
+			factor++;
+		}
+	}
+
 	// multiply rest for total period
-
-	//long long totalPeriod = periodX * periodY * periodZ;
-	//std::cout << "Part 2: " << totalPeriod << std::endl;
+	long long totalPeriod = periodX * periodY * periodZ;
+	std::cout << "Part 2: " << totalPeriod << std::endl;
 
 }
 
