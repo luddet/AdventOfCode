@@ -24,9 +24,9 @@ public:
 private:
 	enum class Mode
 	{
-		POSITION = 0,
-		IMMEDIATE = 1,
-		RELATIVE = 2
+		Position = 0,
+		Immediate = 1,
+		Relative = 2
 	};
 
 	mem_item_t getMemValue(Mode mode, size_t address);

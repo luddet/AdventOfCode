@@ -53,13 +53,13 @@ Computer::mem_item_t Computer::getMemValue(Mode mode, size_t p)
 		resizeMemory(p + 1);
 	switch (mode)
 	{
-		case Mode::POSITION:
+		case Mode::Position:
 			if ((size_t)m_memory[p] >= m_memory.size())
 				resizeMemory(m_memory[p] + 1);
 			return m_memory[m_memory[p]];
-		case Mode::IMMEDIATE:
+		case Mode::Immediate:
 			return m_memory[p];
-		case Mode::RELATIVE:
+		case Mode::Relative:
 			if (m_relativeBase + m_memory[p] > m_memory.size())
 				resizeMemory(m_relativeBase + m_memory[p] + 1);
 			return m_memory[m_relativeBase + m_memory[p]];
@@ -70,15 +70,15 @@ Computer::mem_item_t Computer::getMemValue(Mode mode, size_t p)
 
 void Computer::setMemValue(mem_item_t value, size_t address, Mode mode)
 {
-	assert(mode != Mode::IMMEDIATE);
+	assert(mode != Mode::Immediate);
 	resizeMemory(address + 1);
 	switch (mode)
 	{
-		case Mode::POSITION:
+		case Mode::Position:
 			resizeMemory(m_memory[address] + 1);
 			m_memory[m_memory[address]] = value;
 			break;
-		case Mode::RELATIVE:
+		case Mode::Relative:
 			resizeMemory(m_relativeBase + m_memory[address] + 1);
 			m_memory[m_relativeBase + m_memory[address]] = value;
 			break;
@@ -90,7 +90,7 @@ void Computer::run()
 	mem_item_t opCode = 0;
 	while (m_ip < m_memory.size())
 	{
-		Mode mode[3]{ Mode::POSITION };
+		Mode mode[3]{ Mode::Position };
 		opCode = m_memory[m_ip] % 100;
 		mode[0] = (Mode)((m_memory[m_ip] / 100) % 10);
 		mode[1] = (Mode)((m_memory[m_ip] / 1000) % 10);
