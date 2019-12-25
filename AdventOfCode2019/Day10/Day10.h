@@ -2,6 +2,8 @@
 #include <istream>
 #include <set>
 #include <vector>
+#include <algorithm>
+
 
 namespace Day10
 {

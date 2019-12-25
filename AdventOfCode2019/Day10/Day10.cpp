@@ -4,7 +4,6 @@
 #include "Day10.h"
 
 #include <functional>
-#include <algorithm>
 #include <string>
 #include <cmath>
 
