@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 
 const char* TESTINPUT1 =
 "10 ORE => 10 A\n"
@@ -58,20 +59,18 @@ Reaction parseReaction(const std::string& reactionInput)
 	std::string id, delim;
 	int count;
 
-
 	size_t offset = 0;
+	std::string delimiters(" ,=>");
 
-	is >> count;
-	int ch;
-	while ((ch = is.peek()) != ',' && ch != '=' && ch != ' ')
-	{
+	auto segmentStart = std::begin(reactionInput) + offset;
+	auto segmentEndIt = std::find_first_of(segmentStart, std::end(reactionInput), std::begin(delimiters), std::end(delimiters));
 
-	}
+	count = std::stoi(std::string(segmentStart, segmentEndIt));
 
-	if (!is.fail())
-		inputs.push_back(std::make_tuple(id, count));
+	
 
-	is >> count >> id;
+
+
 
 	return Reaction(id, count, inputs);
 }
