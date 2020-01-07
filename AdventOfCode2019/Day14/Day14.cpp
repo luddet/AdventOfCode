@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <chrono>
 
-uint32_t TEST_1_ORE_REQ = 31;
+uint64_t TEST_1_ORE_REQ = 31;
 const char* TEST_1_INPUT =
 "10 ORE => 10 A\n"
 "1 ORE => 1 B\n"
@@ -22,7 +22,7 @@ const char* TEST_1_INPUT =
 "7 A, 1 D => 1 E\n"
 "7 A, 1 E => 1 FUEL";
 
-uint32_t TEST_2_ORE_REQ = 165;
+uint64_t TEST_2_ORE_REQ = 165;
 const char* TEST_2_INPUT =
 "9 ORE => 2 A\n"
 "8 ORE => 3 B\n"
@@ -32,7 +32,7 @@ const char* TEST_2_INPUT =
 "4 C, 1 A => 1 CA\n"
 "2 AB, 3 BC, 4 CA => 1 FUEL";
 
-uint32_t TEST_3_ORE_REQ = 13312;
+uint64_t TEST_3_ORE_REQ = 13312;
 const char* TEST_3_INPUT =
 "157 ORE => 5 NZVS\n"
 "165 ORE => 6 DCFZ\n"
@@ -44,7 +44,7 @@ const char* TEST_3_INPUT =
 "165 ORE => 2 GPVTF\n"
 "3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT";
 
-uint32_t TEST_4_ORE_REQ = 180697;
+uint64_t TEST_4_ORE_REQ = 180697;
 const char* TEST_4_INPUT =
 "2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG\n"
 "17 NVRVD, 3 JNWZP => 8 VPVL\n"
@@ -59,7 +59,7 @@ const char* TEST_4_INPUT =
 "1 VJHF, 6 MNCFX => 4 RFSQX\n"
 "176 ORE => 6 VJHF";
 
-uint32_t TEST_5_ORE_REQ = 2210736;
+uint64_t TEST_5_ORE_REQ = 2210736;
 const char* TEST_5_INPUT =
 "171 ORE => 8 CNZTR\n"
 "7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL\n"
@@ -79,7 +79,7 @@ const char* TEST_5_INPUT =
 "7 XCVML => 6 RJRHP\n"
 "5 BHXH, 4 VRPVC => 5 LTCX";
 
-std::vector<std::tuple<const char*, uint32_t>> TEST_DATA{
+std::vector<std::tuple<const char*, uint64_t>> TEST_DATA{
 	{TEST_1_INPUT, TEST_1_ORE_REQ},
 	{TEST_2_INPUT, TEST_2_ORE_REQ},
 	{TEST_3_INPUT, TEST_3_ORE_REQ},
@@ -90,22 +90,22 @@ std::vector<std::tuple<const char*, uint32_t>> TEST_DATA{
 class Reaction
 {
 public:
-	using input_t = std::tuple<std::string, uint32_t>;
+	using input_t = std::tuple<std::string, uint64_t>;
 	using input_container_t = std::vector<input_t>;
 
-	Reaction(const std::string output, uint32_t outputCount, const input_container_t& inputs)
+	Reaction(const std::string output, uint64_t outputCount, const input_container_t& inputs)
 		: m_output(output),
 		m_outputCount(outputCount),
 		m_inputs(inputs)
 	{}
 
 	const std::string& getOutput() const;
-	const uint32_t getOutputCount() const;
+	const uint64_t getOutputCount() const;
 	const input_container_t& getInputs() const;
 
 private:
 	std::string m_output;
-	uint32_t m_outputCount;
+	uint64_t m_outputCount;
 	input_container_t m_inputs;
 };
 
@@ -115,7 +115,7 @@ Reaction::getOutput() const
 	return m_output;
 }
 
-const uint32_t
+const uint64_t
 Reaction::getOutputCount() const
 {
 	return m_outputCount;
@@ -166,55 +166,75 @@ parseReaction(const std::string& reactionInput)
 }
 
 
-
-
-int main()
+std::vector<Reaction>
+parseReactions(std::istream& stream)
 {
-	std::fstream fs("input.txt");
 	std::string line;
 	std::vector<Reaction> reactions;
-	while (std::getline(fs, line))
+	while (std::getline(stream, line))
 		reactions.emplace_back(parseReaction(line));
+	return reactions;
+}
 
-	std::stack<std::tuple<std::string, uint32_t>> productionStack;
-	std::unordered_map<std::string, uint32_t> chemicalStore;
+using store_t = std::unordered_map<std::string, uint64_t>;
 
-	productionStack.push(std::make_tuple("FUEL", 1));
-	
-	auto start = std::chrono::high_resolution_clock::now();
-	uint32_t consumedOre = 0;
+void addToStore(store_t& store, const std::string& name, const uint64_t& amount)
+{
+	auto storeIt = store.find(name);
+	if (storeIt == store.end())
+		store.insert(std::make_pair(name, amount));
+	else
+		(*storeIt).second += amount;
+}
+
+void removeFromStore(store_t& store, const std::string& name, const uint64_t& amount)
+{
+	auto storeIt = store.find(name);
+	if (storeIt == store.end())
+		throw std::exception("name not found in store");
+
+	(*storeIt).second -= amount;
+}
+
+template<class ReactionsContainer>
+bool produce(std::string name, uint64_t amount, store_t& store, ReactionsContainer& reactions)
+{
+	std::stack<std::tuple<std::string, uint64_t>> productionStack;
+	productionStack.push(std::make_tuple(name, amount));
 	while (!productionStack.empty())
 	{
 		// get top
 		const std::string& nameToProduce = std::get<0>(productionStack.top());
 		// find reaction
-		Reaction& reaction = *std::find_if(std::begin(reactions), std::end(reactions), [&nameToProduce](const Reaction& r) { return r.getOutput() == nameToProduce; });
-		uint32_t batchSize = reaction.getOutputCount();
+		auto reactionIt = std::find_if(std::begin(reactions), std::end(reactions), [&nameToProduce](const Reaction& r) { return r.getOutput() == nameToProduce; });
+		if (reactionIt == std::end(reactions)) // Can't find reaction to produce
+			return false;
 
-		uint32_t batchesToProduce;
-		auto inStoreIt = chemicalStore.find(nameToProduce);
-		uint32_t amountInStore = inStoreIt == chemicalStore.end() ? 0 : (*inStoreIt).second;
+		Reaction& reaction = *reactionIt;
+		uint64_t batchSize = reaction.getOutputCount();
+
+		uint64_t batchesToProduce;
+		auto inStoreIt = store.find(nameToProduce);
+		uint64_t amountInStore = inStoreIt == store.end() ? 0 : (*inStoreIt).second;
 		if (amountInStore >= std::get<1>(productionStack.top())) // already enough in store
 		{
 			productionStack.pop();
 			continue;
 		}
 
-		uint32_t amountNeeded = std::get<1>(productionStack.top()) - amountInStore;
-		
-		batchesToProduce = ( (amountNeeded / batchSize) + (amountNeeded % batchSize == 0 ? 0 : 1) );
+		uint64_t amountNeeded = std::get<1>(productionStack.top()) - amountInStore;
+
+		batchesToProduce = ((amountNeeded / batchSize) + (amountNeeded % batchSize == 0 ? 0 : 1));
 
 		// check store for needed chems for top
-		std::vector<std::tuple<std::string, uint32_t>> missingChems;
-		std::for_each(std::begin(reaction.getInputs()), std::end(reaction.getInputs()), [&chemicalStore, &missingChems, batchesToProduce](Reaction::input_t input)
+		std::vector<std::tuple<std::string, uint64_t>> missingChems;
+		std::for_each(std::begin(reaction.getInputs()), std::end(reaction.getInputs()), [&store, &missingChems, batchesToProduce](Reaction::input_t input)
 			{
 				std::string inputName = std::get<0>(input);
-				if (inputName == "ORE") // WE have infinite ORE
-					return;
-				std::uint32_t inputAmountRequired = std::get<1>(input) * batchesToProduce;
+				std::uint64_t inputAmountRequired = std::get<1>(input) * batchesToProduce;
 
-				auto storeIt = chemicalStore.find(inputName);
-				uint32_t amountInStore = storeIt == chemicalStore.end() ? 0 : (*storeIt).second;
+				auto storeIt = store.find(inputName);
+				uint64_t amountInStore = storeIt == store.end() ? 0 : (*storeIt).second;
 				if (amountInStore < inputAmountRequired)
 					missingChems.push_back(std::make_tuple(inputName, inputAmountRequired));
 			});
@@ -223,31 +243,14 @@ int main()
 		if (missingChems.empty())
 		{
 			// reduce store
-			std::for_each(std::begin(reaction.getInputs()), std::end(reaction.getInputs()), [&chemicalStore, &consumedOre, batchesToProduce](Reaction::input_t input)
+			std::for_each(std::begin(reaction.getInputs()), std::end(reaction.getInputs()), [&store, batchesToProduce](Reaction::input_t input)
 				{
 					std::string inputName = std::get<0>(input);
-					std::uint32_t inputAmountRequired = std::get<1>(input) * batchesToProduce;
-
-					if (inputName == "ORE")
-					{
-						consumedOre += inputAmountRequired;
-					}
-					else
-					{
-						auto storeIt = chemicalStore.find(inputName);
-						(*storeIt).second -= inputAmountRequired;
-					}
+					std::uint64_t inputAmountRequired = std::get<1>(input) * batchesToProduce;
+					removeFromStore(store, inputName, inputAmountRequired);
 				});
 			// and add output to store
-			auto storeIt = chemicalStore.find(nameToProduce);
-			if (storeIt == chemicalStore.end())
-			{
-				chemicalStore.insert(std::make_pair(nameToProduce, batchesToProduce * batchSize));
-			}
-			else
-			{
-				(*storeIt).second += batchesToProduce * batchSize;
-			}
+			addToStore(store, nameToProduce, batchesToProduce * batchSize);
 
 			productionStack.pop();
 		}
@@ -259,12 +262,53 @@ int main()
 					productionStack.push(t);
 				});
 		}
-
 	}
+	return true;
+}
+
+bool runTests()
+{
+	return std::all_of(std::begin(TEST_DATA), std::end(TEST_DATA), [](std::tuple<const char*, uint64_t> testItem)
+		{
+			std::istringstream iss(std::get<0>(testItem));
+			uint64_t expectedResult = std::get<1>(testItem);
+
+			auto reactions = parseReactions(iss);
+
+			std::unordered_map<std::string, uint64_t> chemicalStore;
+
+			uint64_t initialOreAmount = 1000000000000;
+			chemicalStore.insert(std::make_pair("ORE", initialOreAmount));
+
+			produce("FUEL", 1, chemicalStore, reactions);
+
+			auto oreConsumed = initialOreAmount - (*chemicalStore.find("ORE")).second;
+
+			return oreConsumed == expectedResult;
+		});
+}
+
+
+int main()
+{
+	assert(runTests());
+
+	std::fstream fs("input.txt");
+	auto reactions = parseReactions(fs);
+
+	std::unordered_map<std::string, uint64_t> chemicalStore;
+
+	uint64_t initialOreAmount = 1000000000000;
+	chemicalStore.insert(std::make_pair("ORE", initialOreAmount));
+	
+	auto start = std::chrono::high_resolution_clock::now();
+	produce("FUEL", 1, chemicalStore, reactions);
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> duration = end - start;
 
-	std::cout << "Part 1: " << consumedOre << std::endl;
+	auto oreLeft = (*chemicalStore.find("ORE")).second;
+
+	std::cout << "Part 1: " << initialOreAmount - oreLeft << std::endl;
 	std::cout << "Time taken: " << duration.count() << std::endl;
 	std::cout << "Time for a million: " << duration.count() * 1000000.0 << std::endl;
 }
