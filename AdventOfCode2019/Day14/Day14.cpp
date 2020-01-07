@@ -301,14 +301,34 @@ int main()
 	uint64_t initialOreAmount = 1000000000000;
 	chemicalStore.insert(std::make_pair("ORE", initialOreAmount));
 	
-	auto start = std::chrono::high_resolution_clock::now();
+	auto startTime = std::chrono::high_resolution_clock::now();
+	double outputInterval = 10.0;
+	auto lastOutputTime = startTime;
 	produce("FUEL", 1, chemicalStore, reactions);
-	auto end = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> duration = end - start;
 
-	auto oreLeft = (*chemicalStore.find("ORE")).second;
+	auto oreUsedFor1Fuel = initialOreAmount - (*chemicalStore.find("ORE")).second;
+	uint64_t totalFuelProduced = 0;
+	// Naive brute force production
+	while (produce("FUEL", 1, chemicalStore, reactions))
+	{
+		totalFuelProduced += (*chemicalStore.find("FUEL")).second;
+		chemicalStore.erase("FUEL");
 
-	std::cout << "Part 1: " << initialOreAmount - oreLeft << std::endl;
+		auto now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> totalDuration = now - startTime;
+		std::chrono::duration<double> timeSinceLastOutput = now - lastOutputTime;
+		if (timeSinceLastOutput.count() >= outputInterval)
+		{
+			uint64_t oreLeftInStore = (*chemicalStore.find("ORE")).second;
+			std::cout << "Ore left: " << oreLeftInStore << ", Fuel produced: " << totalFuelProduced << ", Fuel/s: " << totalFuelProduced/totalDuration.count() << std::endl;
+			lastOutputTime = now;
+		}
+	}
+
+	auto endTime = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> duration = endTime - startTime;
+
+	std::cout << "Part 1: " << oreUsedFor1Fuel << std::endl;
+	std::cout << "Part 2: " << totalFuelProduced << std::endl;
 	std::cout << "Time taken: " << duration.count() << std::endl;
-	std::cout << "Time for a million: " << duration.count() * 1000000.0 << std::endl;
 }
