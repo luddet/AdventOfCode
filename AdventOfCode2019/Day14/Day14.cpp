@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <stack>
 #include <unordered_map>
+#include <chrono>
 
 uint32_t TEST_1_ORE_REQ = 31;
 const char* TEST_1_INPUT =
@@ -180,6 +181,7 @@ int main()
 
 	productionStack.push(std::make_tuple("FUEL", 1));
 	
+	auto start = std::chrono::high_resolution_clock::now();
 	uint32_t consumedOre = 0;
 	while (!productionStack.empty())
 	{
@@ -259,7 +261,10 @@ int main()
 		}
 
 	}
-	
-	std::cout << "Part 1: " << consumedOre << std::endl;
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> duration = end - start;
 
+	std::cout << "Part 1: " << consumedOre << std::endl;
+	std::cout << "Time taken: " << duration.count() << std::endl;
+	std::cout << "Time for a million: " << duration.count() * 1000000.0 << std::endl;
 }
