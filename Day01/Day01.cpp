@@ -2,19 +2,62 @@
 //
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <exception>
+#include <cassert>
+
+int findProduct(std::vector<int>& numbers, int sum)
+{
+	for (size_t i = 0; i < numbers.size() - 1; ++i)
+		for (size_t j = i + 1; j < numbers.size(); ++j)
+			if (numbers[i] + numbers[j] == sum)
+				return numbers[i] * numbers[j];
+			
+	throw std::exception("Failed to find match.");
+}
+
+int findTripleProduct(std::vector<int>& numbers, int sum)
+{
+	for (size_t i = 0; i < numbers.size() - 2; ++i)
+		for (size_t j = i + 1; j < numbers.size() - 1; ++j)
+			for (size_t k = j + 1; k < numbers.size(); ++k)
+				if (numbers[i] + numbers[j] + numbers[k] == sum)
+					return numbers[i] * numbers[j] * numbers[k];
+
+	throw std::exception("Failed to find match.");
+}
+
+std::vector<int> getInputVector(std::istream& is)
+{
+	std::vector<int> v;
+	int n;
+	while (is >> n)
+		v.push_back(n);
+	return v;
+}
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	constexpr int SUM(2020);
+	constexpr int TEST_ANSWER_1(514579);
+	constexpr int TEST_ANSWER_2(241861950);
+
+	std::istringstream testInput(std::string("1721\n979\n366\n299\n675\n1456"));
+	auto testNumbers = getInputVector(testInput);
+	int testProduct1 = findProduct(testNumbers, SUM);
+	assert(testProduct1 == TEST_ANSWER_1);
+
+	int testProduct2 = findTripleProduct(testNumbers, SUM);
+	assert(testProduct2 == TEST_ANSWER_2);
+
+	std::ifstream input("input.txt");
+	auto numbers = getInputVector(input);
+
+	std::cout << "Part 1: " << findProduct(numbers, SUM) << std::endl;
+	std::cout << "Part 2: " << findTripleProduct(numbers, SUM) << std::endl;
+
+
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
