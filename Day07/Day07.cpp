@@ -8,6 +8,7 @@
 #include <sstream>
 #include <exception>
 #include <stack>
+#include <algorithm>
 
 const std::string EXAMPLE_INPUT("light red bags contain 1 bright white bag, 2 muted yellow bags.\n"
 	"dark orange bags contain 3 bright white bags, 4 muted yellow bags.\n"
@@ -63,8 +64,17 @@ void parseLine(const std::string& line, std::map<const std::string, std::map<con
 		searchStart = matches.suffix().first;
 	}
 	canContain[container] = contained;
-//	contained.clear();
+}
 
+uint32_t sumBagContents(const std::string& target, const std::map<const std::string, std::map<const std::string, uint32_t>>& canContain)
+{
+	uint32_t sum(1);
+
+	auto it = canContain.find(target);
+	for (auto& m : it->second)
+		sum += m.second * sumBagContents(m.first, canContain);
+	
+	return sum;
 }
 
 int main()
@@ -83,13 +93,12 @@ int main()
 		parseLine(line, canContain, canBeContainedIn);
 
 	set<string> possibleContainers;
-
 	std::stack<std::string> targets;
 	targets.push("shiny gold");
 
 	while (!targets.empty())
 	{
-		std::string currentTarget = targets.top();
+		string currentTarget(targets.top());
 		targets.pop();
 		possibleContainers.insert(currentTarget);
 
@@ -97,6 +106,10 @@ int main()
 			targets.push(p.first);
 	}
 
-	std::cout << "Day07 Part 1: " << possibleContainers.size()-1 << std::endl;
+	auto part1BagCount = possibleContainers.size() - 1;
+	auto part2BagCount = sumBagContents("shiny gold", canContain) - 1;
+
+	std::cout << "Day07 Part 1: " << part1BagCount << std::endl;
+	std::cout << "Day07 Part 2: " << part2BagCount << std::endl;
 
 }
