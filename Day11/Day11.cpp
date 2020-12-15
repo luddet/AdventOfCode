@@ -17,40 +17,94 @@ const std::string EXAMPLE =
 "L.LLLLLL.L\n"
 "L.LLLLL.LL";
 
-using grid_t = std::vector<char>;
+const char FREE('L'), OCCUPIED('#');
 
-uint32_t countInNeighbourhood(grid_t& grid, int32_t index, int32_t numRows, int32_t numCols, char counted)
+using grid_t = std::vector<std::string>;
+
+enum class NeighbourhoodType
 {
-	size_t row(index / numCols), col(index % numCols);
-	int32_t count(0);
-	if (row != 0 && col != 0 && grid[row * numCols + col - numCols - 1] == counted) // TOP LEFT
-		++count;
-	if (row != 0 && grid[row * numCols + col - numCols] == counted) // TOP
-		++count;
-	if (row != 0 && col != numCols - 1 && grid[row * numCols + col - numCols + 1] == counted) // TOP RIGHT
-		++count;
-	if (col != 0 && grid[row * numCols + col - 1] == counted) // LEFT
-		++count;
-	if (col != numCols - 1 && grid[row * numCols + col + 1] == counted) // RIGHT
-		++count;
-	if (row != numRows - 1 && col != 0 && grid[row * numCols + col + numCols - 1] == counted) // BOTTOM LEFT
-		++count;
-	if (row != numRows - 1 && grid[row * numCols + col + numCols] == counted) // BOTTOM
-		++count;
-	if (row != numRows - 1 && col != numCols - 1 && grid[row * numCols + col + numCols + 1] == counted) // BOTTOM RIGHT
-		++count;
+	Nearest,
+	LineOfSight
+};
+
+uint32_t countOccupiedInNeighbourhood(grid_t& grid, size_t row, size_t col, NeighbourhoodType type)
+{
+	uint32_t count(0);
+	uint32_t maxSteps = (type == NeighbourhoodType::Nearest) ? 1 : UINT32_MAX;
+
+	std::vector<std::pair<int32_t, int32_t>> directions{ {-1 , -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1} };
+
+	for (auto [rowStep, colStep] : directions)
+	{
+		uint32_t steps(1);
+		int32_t currentRow(row + rowStep), currentCol(col + colStep);
+		while (steps <= maxSteps && currentRow >= 0 && currentRow < int32_t(grid.size()) && currentCol >= 0 && currentCol < int32_t(grid[0].length()))
+		{
+			if (grid[currentRow][currentCol] == FREE)
+				break;
+			else if (grid[currentRow][currentCol] == OCCUPIED)
+			{
+				++count;
+				break;
+			}
+
+			currentRow += rowStep;
+			currentCol += colStep;
+			steps++;
+		}
+	}
 	return count;
 }
 
-std::ostream& printGrid(std::ostream& os, const grid_t& grid, int32_t numCols)
+std::ostream& operator<<(std::ostream& os, const grid_t& grid)
 {
 	for (size_t i = 0; i < grid.size(); ++i)
 	{
 		os << grid[i];
-		if ((i % numCols) == numCols - 1)
+		if (i < grid.size() - 1)
 			os << std::endl;
 	}
 	return os;
+}
+
+grid_t execute(const grid_t& grid, NeighbourhoodType type, uint32_t occupiedLimit)
+{
+	grid_t newGrid(std::begin(grid), std::end(grid));
+	bool changed = true;
+	//size_t iteration(0);
+	while (changed)
+	{
+		//std::cout << iteration++ << std::endl;
+		grid_t oldGrid(begin(newGrid), end(newGrid));
+		changed = false;
+		for (size_t row = 0; row < grid.size(); ++row)
+		{
+			for (size_t col = 0; col < grid[0].length(); ++col)
+			{
+				switch (oldGrid[row][col])
+				{
+				case FREE:
+					if (countOccupiedInNeighbourhood(oldGrid, row, col, type) == 0)
+					{
+						newGrid[row][col] = OCCUPIED;
+						changed = true;
+					}
+					break;
+				case OCCUPIED:
+					if (countOccupiedInNeighbourhood(oldGrid, row, col, type) >= occupiedLimit)
+					{
+						newGrid[row][col] = FREE;
+						changed = true;
+					}
+					break;
+				}
+			}
+		}
+		//std::cout << newGrid << std::endl << std::endl;
+		//std::string line;
+		//std::getline(std::cin, line);
+	}
+	return newGrid;
 }
 
 int main()
@@ -61,52 +115,21 @@ int main()
 	//std::istringstream is(EXAMPLE);
 	std::ifstream is("input.txt");
 	grid_t grid;
-	int32_t numRows(0), numCols(0);
+
 	std::string line;
 	while (std::getline(is, line) && !line.empty())
-	{
-		++numRows;
-		numCols = line.length();
-		std::copy(begin(line), end(line), std::back_inserter(grid));
-	}
+		grid.push_back(line);
 	
+	int32_t part1Count(0); 
+	auto grid1 = execute(grid, NeighbourhoodType::Nearest, 4);
+	for (auto& row : grid1)
+		part1Count += std::count(begin(row), end(row), '#');
+	std::cout << "Day11 Part 1: " << part1Count << std::endl;
 
-	uint32_t iteration(0);
-	//std::cout << "iteration: " << iteration << std::endl;
-	//printGrid(std::cout, grid, numCols) << std::endl;
-
-	bool changed = true;
-	while (changed)
-	{
-		grid_t oldGrid(begin(grid), end(grid));
-		changed = false;
-		for (size_t i = 0; i < grid.size(); ++i)
-		{
-			switch ((oldGrid)[i])
-			{
-				case 'L':
-					if (countInNeighbourhood((oldGrid), i, numRows, numCols, '#') == 0)
-					{
-						(grid)[i] = '#';
-						changed = true;
-					}
-					break;
-				case '#':
-					if (countInNeighbourhood((oldGrid), i, numRows, numCols, '#') >= 4)
-					{
-						(grid)[i] = 'L';
-						changed = true;
-					}
-					break;
-			}
-		}
-
-		std::cout << "iteration: " << ++iteration << std::endl;
-		//printGrid(std::cout, grid, numCols) << std::endl;
-		//std::getline(std::cin, line);
-	}
-
-	auto occupiedCount = std::count(begin(grid), end(grid), '#');
-	std::cout << "Day11 Part 1: " << occupiedCount << std::endl;
+	int32_t part2Count(0); 
+	auto grid2 = execute(grid, NeighbourhoodType::LineOfSight, 5);
+	for (auto& row : grid2)
+		part2Count += std::count(begin(row), end(row), '#');
+	std::cout << "Day11 Part 2: " << part2Count << std::endl;
 
 }
