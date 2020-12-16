@@ -34,8 +34,8 @@ int main()
 		}
 	}
 
-	int32_t departureTime(earliestDeparture);
-	int32_t busId(0);
+	uint32_t departureTime(earliestDeparture);
+	uint32_t busId(0);
 	while (true)
 	{
 		for (auto id : ids)
@@ -58,20 +58,23 @@ int main()
 
 	uint64_t currentTime(maxId - maxOffset);
 	uint64_t iteration(0);
-	bool foundIt;
-	auto startTime = std::chrono::steady_clock::now();
-	while (iteration < 1000000000)
+
+	std::vector<uint64_t> flattenedIds;
+	for (auto id : ids)
 	{
-		//if (iteration % 1000000000 == 0)
-		//	std::cout << "Current time: " << currentTime << std::endl;
-		foundIt = true;
-		for (auto id : ids)
-			if ((currentTime + id.second) % id.first != 0)
-			{
-				foundIt = false;
-				break;
-			}
-		if (foundIt)
+		flattenedIds.push_back(id.second);
+		flattenedIds.push_back(id.first);
+	}
+
+	auto startTime = std::chrono::steady_clock::now();
+	while (true /* iteration < 1000000000 */)
+	{
+		if (iteration % 1000000000 == 0)
+			std::cout << "Current time: " << currentTime << std::endl;
+		uint64_t mod(0);
+		for (size_t i = 0; mod == 0 && i < flattenedIds.size(); i += 2)
+			mod = (currentTime + flattenedIds[i]) % flattenedIds[i+1];
+		if (mod == 0)
 			break;
 		currentTime += maxId;
 		iteration++;
