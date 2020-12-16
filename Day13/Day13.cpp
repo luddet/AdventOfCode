@@ -12,6 +12,7 @@ std::vector<const char*> EXAMPLE {
 	"939\n67,x,7,59,61", // 779210
 	"939\n67,7,x,59,61", // 1261476
 	"939\n1789,37,47,1889", // 1202161486
+	"939\n4,x,7,x,13,x,9,x,x,5"
 };
 
 int main()
@@ -56,31 +57,34 @@ int main()
 
 	auto [maxId, maxOffset] = *std::max_element(std::begin(ids), std::end(ids));
 
-	uint64_t currentTime(maxId - maxOffset);
-	uint64_t iteration(0);
-
-	std::vector<uint64_t> flattenedIds;
-	for (auto id : ids)
-	{
-		flattenedIds.push_back(id.second);
-		flattenedIds.push_back(id.first);
-	}
+	uint64_t iteration(1);
+	uint64_t currentTime(0);
+	uint64_t currentIdsInPeriod(1);
+	uint64_t currentPeriod(ids[0].first);
 
 	auto startTime = std::chrono::steady_clock::now();
-	while (true /* iteration < 1000000000 */)
+	while (true)
 	{
-		if (iteration % 1000000000 == 0)
-			std::cout << "Current time: " << currentTime << std::endl;
-		uint64_t mod(0);
-		for (size_t i = 0; mod == 0 && i < flattenedIds.size(); i += 2)
-			mod = (currentTime + flattenedIds[i]) % flattenedIds[i+1];
-		if (mod == 0)
+		while (currentIdsInPeriod < ids.size())
+		{
+			if ((currentTime + ids[currentIdsInPeriod].second) % ids[currentIdsInPeriod].first == 0)
+			{
+				currentPeriod *= ids[currentIdsInPeriod].first;
+				++currentIdsInPeriod;
+			}
+			else
+				break;
+		}
+
+		if (currentIdsInPeriod == ids.size()) // Found all
 			break;
-		currentTime += maxId;
+
+		currentTime += currentPeriod;
 		iteration++;
 	}
 	auto endTime = std::chrono::steady_clock::now();
 	auto time = std::chrono::duration<double>(endTime - startTime);
+	std::cout << "part 2 iterations: " << iteration << std::endl;
 	std::cout << iteration/time.count() << " iteration/s" << std::endl;
 
 	std::cout << "Day13 Part 1: " << part1 << std::endl;
