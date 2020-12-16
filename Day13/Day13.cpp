@@ -2,26 +2,35 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <algorithm>
+#include <chrono>
 
-const std::string EXAMPLE("939\n7, 13, x, x, 59, x, 31, 19");
+std::vector<const char*> EXAMPLE {
+	"939\n7, 13, x, x, 59, x, 31, 19",
+	"939\n17,x,13,19", // part2: 3417
+	"939\n67,7,59,61", // 754018
+	"939\n67,x,7,59,61", // 779210
+	"939\n67,7,x,59,61", // 1261476
+	"939\n1789,37,47,1889", // 1202161486
+};
 
 int main()
 {
-	//std::istringstream is(EXAMPLE);
+	//std::istringstream is(EXAMPLE[0]);
 	std::ifstream is("input.txt");
 
-	int32_t earliestDeparture;
-	std::vector<int32_t> ids;
+	std::vector<std::pair<uint32_t, uint32_t>> ids;
+	uint32_t earliestDeparture;
+	is >> earliestDeparture;
 
 	{
-		is >> earliestDeparture;
+		uint32_t offset(0);
 		std::string id;
 		while (std::getline(is, id, ','))
 		{
-			if (id == " x" || id == "x")
-				continue;
-
-			ids.push_back(std::stoi(id));
+			if (id != " x" && id != "x")
+				ids.push_back({ std::stoi(id), offset });
+			++offset;
 		}
 	}
 
@@ -31,9 +40,9 @@ int main()
 	{
 		for (auto id : ids)
 		{
-			if (departureTime % id == 0)
+			if (departureTime % id.first == 0)
 			{
-				busId = id;
+				busId = id.first;
 				break;
 			}
 		}
@@ -45,8 +54,34 @@ int main()
 
 	auto part1 = (departureTime - earliestDeparture) * busId;
 
-	std::cout << "Day13 Part 1: " << part1 << std::endl;
+	auto [maxId, maxOffset] = *std::max_element(std::begin(ids), std::end(ids));
 
+	uint64_t currentTime(maxId - maxOffset);
+	uint64_t iteration(0);
+	bool foundIt;
+	auto startTime = std::chrono::steady_clock::now();
+	while (iteration < 1000000000)
+	{
+		//if (iteration % 1000000000 == 0)
+		//	std::cout << "Current time: " << currentTime << std::endl;
+		foundIt = true;
+		for (auto id : ids)
+			if ((currentTime + id.second) % id.first != 0)
+			{
+				foundIt = false;
+				break;
+			}
+		if (foundIt)
+			break;
+		currentTime += maxId;
+		iteration++;
+	}
+	auto endTime = std::chrono::steady_clock::now();
+	auto time = std::chrono::duration<double>(endTime - startTime);
+	std::cout << iteration/time.count() << " iteration/s" << std::endl;
+
+	std::cout << "Day13 Part 1: " << part1 << std::endl;
+	std::cout << "Day13 Part 2: " << currentTime << std::endl;
 
 
 
