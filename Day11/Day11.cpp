@@ -37,7 +37,7 @@ uint32_t countOccupiedInNeighbourhood(grid_t& grid, size_t row, size_t col, Neig
 	for (auto [rowStep, colStep] : directions)
 	{
 		uint32_t steps(1);
-		int32_t currentRow(row + rowStep), currentCol(col + colStep);
+		int32_t currentRow(int32_t(row) + rowStep), currentCol(int32_t(col) + colStep);
 		while (steps <= maxSteps && currentRow >= 0 && currentRow < int32_t(grid.size()) && currentCol >= 0 && currentCol < int32_t(grid[0].length()))
 		{
 			if (grid[currentRow][currentCol] == FREE)
@@ -123,13 +123,13 @@ int main()
 	int32_t part1Count(0); 
 	auto grid1 = execute(grid, NeighbourhoodType::Nearest, 4);
 	for (auto& row : grid1)
-		part1Count += std::count(begin(row), end(row), '#');
+		part1Count += int32_t(std::count(begin(row), end(row), '#'));
 	std::cout << "Day11 Part 1: " << part1Count << std::endl;
 
 	int32_t part2Count(0); 
 	auto grid2 = execute(grid, NeighbourhoodType::LineOfSight, 5);
 	for (auto& row : grid2)
-		part2Count += std::count(begin(row), end(row), '#');
+		part2Count += int32_t(std::count(begin(row), end(row), '#'));
 	std::cout << "Day11 Part 2: " << part2Count << std::endl;
 
 }
