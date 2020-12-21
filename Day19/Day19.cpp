@@ -7,7 +7,7 @@
 #include <map>
 #include <set>
 
-const char* EXAMPLE =
+const char* EXAMPLE1 =
 "0: 4 1 5\n"
 "1: 2 3 | 3 2\n"
 "2: 4 4 | 5 5\n"
@@ -20,6 +20,55 @@ const char* EXAMPLE =
 "abbbab\n"
 "aaabbb\n"
 "aaaabbb\n";
+
+const char* EXAMPLE2 =
+"42: 9 14 | 10 1\n"
+"9: 14 27 | 1 26\n"
+"10: 23 14 | 28 1\n"
+"1: \"a\"\n"
+"11: 42 31\n"
+"5: 1 14 | 15 1\n"
+"19: 14 1 | 14 14\n"
+"12: 24 14 | 19 1\n"
+"16: 15 1 | 14 14\n"
+"31: 14 17 | 1 13\n"
+"6: 14 14 | 1 14\n"
+"2: 1 24 | 14 4\n"
+"0: 8 11\n"
+"13: 14 3 | 1 12\n"
+"15: 1 | 14\n"
+"17: 14 2 | 1 7\n"
+"23: 25 1 | 22 14\n"
+"28: 16 1\n"
+"4: 1 1\n"
+"20: 14 14 | 1 15\n"
+"3: 5 14 | 16 1\n"
+"27: 1 6 | 14 18\n"
+"14: \"b\"\n"
+"21: 14 1 | 1 14\n"
+"25: 1 1 | 1 14\n"
+"22: 14 14\n"
+"8: 42\n"
+"26: 14 22 | 1 20\n"
+"18: 15 15\n"
+"7: 14 5 | 1 21\n"
+"24: 14 1\n"
+"\n"
+"abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa\n"
+"bbabbbbaabaabba\n"
+"babbbbaabbbbbabbbbbbaabaaabaaa\n"
+"aaabbbbbbaaaabaababaabababbabaaabbababababaaa\n"
+"bbbbbbbaaaabbbbaaabbabaaa\n"
+"bbbababbbbaaaaaaaabbababaaababaabab\n"
+"ababaaaaaabaaab\n"
+"ababaaaaabbbaba\n"
+"baabbaaaabbaaaababbaababb\n"
+"abbbbabbbbaaaababbbbbbaaaababb\n"
+"aaaaabbaabaaaaababaa\n"
+"aaaabbaaaabbaaa\n"
+"aaaabbaabbaaaaaaabbbabbbaaabbaabaaa\n"
+"babaaabbbaaabaababbaabababaaab\n"
+"aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba\n";
 
 template<class Container_T>
 Container_T split(const std::string& str, char delim = ' ', bool trimWhitespace = true)
@@ -51,131 +100,165 @@ std::vector<std::string> split(const std::string& str, char delim = ' ', bool tr
 	return split<std::vector<std::string>>(str, delim, trimWhitespace);
 }
 
+class Rule;
+using rules_t = std::map<size_t, std::shared_ptr<Rule>>;
+
 class Rule
 {
 public:
-	virtual bool match(const std::string& str) const
+	Rule(size_t index) : m_index(index) {}
+	size_t getIndex() const { return m_index; }
+	virtual bool match(const std::string& str, const rules_t& rules) const
 	{
-		return match(str, 0) == str.length();
+		auto matchLengths = match(str, 0, rules);
+		return std::any_of(matchLengths.begin(), matchLengths.end(), [&](auto length)
+			{
+				return length == str.length();
+			});
 	};
 
 	virtual ~Rule() = default;
 
 
-	virtual size_t match(const std::string& str, size_t startIndex) const = 0;
+	virtual std::vector<size_t> match(const std::string& str, size_t startIndex, const rules_t& rules) const = 0;
+	virtual std::string toString() const = 0;
+private:
+	size_t m_index;
 };
 
+std::ostream& operator<<(std::ostream& os, const Rule& rule)
+{
+	return os << rule.toString();
+}
 
 class StringRule : public Rule
 {
 public:
-	StringRule(const std::string& str) : m_str(str) {}
-
-protected:
-	virtual size_t match(const std::string& str, size_t startIndex) const override
+	StringRule(size_t index, const std::string& str) : Rule{ index }, m_str(str) {}
+	virtual std::string toString() const override
 	{
-		if (startIndex + m_str.length() > str.length())
-			return 0;
-
-		return (str.substr(startIndex, m_str.length()) == m_str) ? m_str.length() : 0;
-	}
-
-private:
-	std::string m_str;
-	friend std::ostream& operator<<(std::ostream& os, const StringRule& rule);
-};
-std::ostream& operator<<(std::ostream& os, const StringRule& rule) { return os << rule.m_str; }
-
-class AndRule : public Rule
-{
-public:
-	AndRule(std::vector<std::shared_ptr<Rule>>& rules) : m_rules(rules)	{}
-
+		return getIndex() + ": \"" + m_str + "\"";
+	};
 protected:
-	virtual size_t match(const std::string& str, size_t startIndex) const override
-	{
-		size_t currentMatchLength(0);
-		size_t matchLength(0);
-		for (auto& rule : m_rules)
-		{
-			if ((currentMatchLength = rule->match(str, startIndex + matchLength)) > 0)
-				matchLength += currentMatchLength;
-			else
-				break;
-		}
-
-		return (currentMatchLength > 0) ? matchLength : 0;
-	}
-private:
-	std::vector<std::shared_ptr<Rule>> m_rules;
-};
-
-class OrRule : public Rule
-{
-public:
-	OrRule(std::vector<std::shared_ptr<Rule>>& rules) : m_rules(rules)	{ }
-
-protected:
-	virtual size_t match(const std::string& str, size_t startIndex) const override
-	{
-		size_t matchLength(0);
-		for (auto& rule : m_rules)
-		{
-			if ((matchLength = rule->match(str, startIndex + matchLength)) > 0)
-				break;
-		}
-		return matchLength;
-	}
-private:
-	std::vector<std::shared_ptr<Rule>> m_rules;
-};
-
 #pragma warning(push)
 #pragma warning(disable: 4100)
-std::shared_ptr<Rule> buildRuleTree(size_t ruleIndex,
-	const std::map<size_t, const std::string>& ruleStrings,
-	std::map<size_t, std::shared_ptr<Rule>>& rules)
-{
-	auto ruleIt = rules.find(ruleIndex);
-	if (ruleIt != rules.end())
-		return ruleIt->second;
-
-	const auto& currentStr = (*ruleStrings.find(ruleIndex)).second;
-	auto charIndex = currentStr.find('"');
-	if (charIndex != std::string::npos)
+	virtual std::vector<size_t> match(const std::string& str, size_t startIndex, const rules_t& rules) const override
 	{
-		++charIndex;
-		auto newRule = std::make_shared<StringRule>(currentStr.substr(charIndex, currentStr.find('"', charIndex) - charIndex));
-		rules[ruleIndex] = newRule;
-		return newRule;
+		if (startIndex + m_str.length() > str.length())
+			return { };
+
+		return (str.substr(startIndex, m_str.length()) == m_str) ? std::vector<size_t>{ m_str.length() } : std::vector<size_t>{};
 	}
-
-	auto parts = split(currentStr, '|');
-	std::vector<std::shared_ptr<Rule>> orRules;
-	for (const auto& part : parts)
-	{
-		std::vector<std::shared_ptr<Rule>> andRules;
-		for (const auto& index : split(part))
-			andRules.push_back(buildRuleTree(std::stoull(index), ruleStrings, rules));
-
-		auto newRule = std::make_shared<AndRule>(andRules);
-		orRules.push_back(newRule);
-	}
-
-	auto newRule = (orRules.size() == 1)? orRules[0]:  std::make_shared<OrRule>(orRules);
-	rules[ruleIndex] = newRule;
-	return newRule;
-}
-
 #pragma warning(pop)
+private:
+	std::string m_str;
+};
+
+class CompoundRule : public Rule
+{
+public:
+	CompoundRule(size_t index, const std::vector<std::vector<size_t>>& rules) : Rule{ index }, m_rules(rules) {}
+	
+	virtual std::string toString() const override
+	{
+		std::ostringstream os;
+		os << getIndex() << ": ";
+		for (size_t i = 0; i < m_rules.size(); ++i)
+		{
+			for (size_t j = 0; j < m_rules[i].size(); ++j)
+			{
+				os << m_rules[i][j];
+				if (j < m_rules[i].size() - 1)
+					os << " ";
+			}
+			if (i < m_rules.size() - 1)
+				os << " | ";
+		}
+		return os.str();
+	}
+
+protected:
+	virtual std::vector<size_t> match(const std::string& str, size_t startIndex, const rules_t& rules) const override
+	{
+		std::vector<size_t> potentialMatchLengths;
+		for (auto andIndices : m_rules)
+		{
+			auto t = matchAll(str, startIndex, andIndices.begin(), andIndices.end(), rules);
+			std::copy(t.begin(), t.end(), std::back_inserter(potentialMatchLengths));
+		}
+
+		return potentialMatchLengths;
+	}
+private:
+	std::vector<size_t> matchAll(const std::string& str, size_t startIndex,
+		std::vector<size_t>::const_iterator ruleStart, std::vector<size_t>::const_iterator ruleEnd, const rules_t& rules) const
+	{
+		if (ruleStart == ruleEnd)
+			return {};
+
+		std::vector<size_t> results;
+		
+		auto& rule = rules.find(*ruleStart)->second;
+		auto matches = rule->match(str, startIndex, rules);
+		if (matches.empty())
+			return {};
+
+		if (ruleStart + 1 == ruleEnd)
+		{
+			return matches;
+		}
+		else
+		{
+			for (auto matchLength : matches)
+			{
+				auto temp = matchAll(str, startIndex + matchLength, ruleStart + 1, ruleEnd, rules);
+				for (auto t : temp)
+					results.push_back(matchLength + t);
+			}
+			return results;
+		}
+	}
+
+	const std::vector<std::vector<size_t>> m_rules;
+};
+
+
+rules_t parseRules(const std::map<size_t, std::string>& ruleStrings)
+{
+	std::map<size_t, std::shared_ptr<Rule>> rules;
+	
+	for (auto& [ruleIndex, ruleString] : ruleStrings)
+	{
+		auto charIndex = ruleString.find('"');
+		if (charIndex != std::string::npos)
+		{
+			++charIndex;
+			rules[ruleIndex] = std::make_shared<StringRule>(ruleIndex, ruleString.substr(charIndex, ruleString.find('"', charIndex) - charIndex));
+			continue;
+		}
+
+		auto parts = split(ruleString, '|');
+		std::vector<std::vector<size_t>> indices;
+		for (const auto& part : parts)
+		{
+			std::vector<size_t> andIndices;
+			for (const auto& index : split(part))
+				andIndices.push_back(std::stoull(index));
+
+			indices.push_back(andIndices);
+		}
+
+		rules[ruleIndex] = std::make_shared<CompoundRule>(ruleIndex, indices);
+	}
+	return rules;
+}
 
 int main()
 {
-	//std::istringstream is(EXAMPLE);
+	//std::istringstream is(EXAMPLE2);
 	std::ifstream is("input.txt");
 	std::string line;
-	std::map<size_t, const std::string> ruleStrings;
-	std::map<size_t, std::shared_ptr<Rule>> rules;
+	std::map<size_t, std::string> ruleStrings;
 	while (std::getline(is, line) && !line.empty())
 	{
 		auto parts = split(line, ':');
@@ -184,17 +267,28 @@ int main()
 		ruleStrings.insert({ ruleIndex, rule });
 	}
 
+	auto part1Rules = parseRules(ruleStrings);
+	auto& part1Rule = part1Rules[0];
 
-	std::shared_ptr<Rule> rule = buildRuleTree(0, ruleStrings, rules);
+	// modify for part 2
+	ruleStrings[8] = "42 | 42 8" ;
+	ruleStrings[11] ="42 31 | 42 11 31";
 
-	size_t numMatching(0);
+	auto part2Rules = parseRules(ruleStrings);
+	auto& part2Rule = part2Rules[0];
+
+	size_t numMatching1(0);
+	size_t numMatching2(0);
 	while (std::getline(is, line) && !line.empty())
 	{
-		if (rule->match(line))
-			++numMatching;
+		if (part1Rule->match(line, part1Rules))
+			++numMatching1;
+		if (part2Rule->match(line, part2Rules))
+			++numMatching2;
 	}
 
-	std::cout << "Day19 Part 1: " << numMatching << std::endl;
+	std::cout << "Day19 Part 1: " << numMatching1 << std::endl;
+	std::cout << "Day19 Part 2: " << numMatching2 << std::endl;
 
 }
 
