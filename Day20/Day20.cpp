@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <set>
 #include <map>
+#include <regex>
 
 #pragma warning(disable: 26812)
 
@@ -129,12 +130,6 @@ const std::vector<std::string> MONSTER
 " #  #  #  #  #  #   "
 };
 
-constexpr size_t DIM{ 10 };
-constexpr size_t DATA_NUMROWS{ DIM }, DATA_NUMCOLS{ DIM };
-constexpr size_t DATA_SIZE{ DATA_NUMROWS * DATA_NUMCOLS };
-
-
-
 class Tile
 {
 public:
@@ -155,32 +150,51 @@ public:
 		operator bool() const { return matched; }
 	};
 
-	Tile() {}
-	Tile(size_t index, const std::array<char, DATA_SIZE>& data);
+	Tile():m_rows(0), m_cols(0) {}
+	Tile(size_t index, const std::string& data, size_t rows, size_t cols);
 
+	char& operator()(size_t row, size_t col);
+	uint64_t	count(char c) const;
 	MatchResult match(const Tile& other) const;
 	size_t		getIndex() const { return m_index; }
+	size_t		getNumCols() const { return m_cols; }
+	size_t		getNumRows() const { return m_rows; }
 	void		flipH();
 	void		flipV();
 	void		rotate(size_t n = 1);
 	void		matchupEdges(size_t fixedEdge, size_t thisEdge, bool reversed);
 
-	void		printRow(std::ostream& os, size_t row, bool excludeEdges = false) const;
+	void		printRow(std::ostream& os, size_t row, bool includeEdges) const;
+
+	static Tile merge(const std::vector<std::vector<Tile>>& tiles, bool includeEdges);
 
 private:
 	void		updateEdges();
 
 	size_t m_index { SIZE_MAX };
-	std::array<char, DATA_SIZE> m_data{};
-	std::array < std::array<char, DIM>, 4> m_edges{};
+	size_t m_rows;
+	size_t m_cols;
+	std::string m_data{};
+	std::array < std::string, 4> m_edges{ };
 
 	friend std::ostream& operator<<(std::ostream& os, const Tile& tile);
 };
 
-Tile::Tile(size_t index, const std::array<char, DATA_SIZE>& data)
-	: m_index(index), m_data(data), m_edges{}
+Tile::Tile(size_t index, const std::string& data, size_t rows, size_t cols)
+	: m_index(index), m_data(data), m_rows(rows), m_cols(cols), 
+	m_edges{ std::string(cols, ' '), std::string(rows, ' '),std::string(cols, ' '), std::string(rows, ' ') }
 {
 	updateEdges();
+}
+
+char& Tile::operator()(size_t row, size_t col)
+{
+	return m_data[row * m_cols + col];
+}
+
+uint64_t Tile::count(char c) const
+{
+	return std::count(m_data.begin(), m_data.end(), c);
 }
 
 void Tile::matchupEdges(size_t fixedEdge, size_t thisEdge, bool reversed)
@@ -207,35 +221,33 @@ void Tile::matchupEdges(size_t fixedEdge, size_t thisEdge, bool reversed)
 		flipH();
 		flipV();
 
-		if (!reversed)
-			if (thisEdge == Tile::MatchResult::TOP || thisEdge == Tile::MatchResult::BOTTOM)
-				flipH();
-			else
-				flipV();
+		if (!reversed && (thisEdge == Tile::MatchResult::TOP || thisEdge == Tile::MatchResult::BOTTOM))
+			flipH();
+		else if (!reversed && (thisEdge == Tile::MatchResult::LEFT || thisEdge == Tile::MatchResult::RIGHT))
+			flipV();
 	}
 	else if (edgeDiff == 3 || edgeDiff == -1)
 	{
 		flipH();
 		flipV();
 		rotate();
-		if (reversed)
-			if (thisEdge == Tile::MatchResult::TOP || thisEdge == Tile::MatchResult::BOTTOM)
-				flipV();
-			else
-				flipH();
+		if (!reversed && (thisEdge == Tile::MatchResult::TOP || thisEdge == Tile::MatchResult::BOTTOM))
+			flipV();
+		else if (reversed && (thisEdge == Tile::MatchResult::LEFT || thisEdge == Tile::MatchResult::RIGHT))
+			flipH();
 	}
 
 }
 
 void Tile::updateEdges()
 {
-	std::copy(m_data.begin(), m_data.begin() + DIM, m_edges[0].begin());
-	std::copy(m_data.begin() + (DIM - 1) * DIM, m_data.end(), m_edges[2].begin());
+	std::copy(m_data.begin(), m_data.begin() + m_cols, m_edges[Tile::MatchResult::TOP].begin());
+	std::copy(m_data.begin() + (m_cols - 1) * m_cols, m_data.end(), m_edges[Tile::MatchResult::BOTTOM].begin());
 
-	for (size_t i = 0; i < DIM; ++i)
+	for (size_t i = 0; i < m_cols; ++i)
 	{
-		m_edges[1][i] = m_data[i * DIM + DIM - 1];
-		m_edges[3][i] = m_data[i * DIM];
+		m_edges[Tile::MatchResult::RIGHT][i] = m_data[(i+1) * m_cols - 1];
+		m_edges[Tile::MatchResult::LEFT][i] = m_data[i * m_cols];
 	}
 }
 
@@ -252,16 +264,16 @@ Tile::MatchResult Tile::match(const Tile& other) const
 
 void Tile::flipH()
 {
-	for (size_t row = 0; row < DATA_NUMROWS; ++row)
-		for (size_t col = 0; col < DATA_NUMCOLS / 2; ++col)
-			std::swap(m_data[row * DATA_NUMCOLS + col], m_data[row * DATA_NUMCOLS + DATA_NUMCOLS - col - 1]);
+	for (size_t row = 0; row < m_rows; ++row)
+		for (size_t col = 0; col < m_cols / 2; ++col)
+			std::swap(m_data[row * m_cols + col], m_data[(row+1) * m_cols - col - 1]);
 	updateEdges();
 }
 
 void Tile::flipV()
 {
-	for (size_t row = 0; row < DATA_NUMROWS / 2; ++row)
-		std::swap_ranges(&m_data[row * DATA_NUMCOLS], &m_data[row * DATA_NUMCOLS] + DATA_NUMCOLS, &m_data[(DATA_NUMROWS - 1) * DATA_NUMCOLS - row * DATA_NUMCOLS]);
+	for (size_t row = 0; row < m_rows / 2; ++row)
+		std::swap_ranges(&m_data[row * m_cols], &m_data[row * m_cols] + m_cols, &m_data[(m_rows - 1) * m_cols - row * m_cols]);
 	updateEdges();
 }
 
@@ -274,25 +286,45 @@ void Tile::rotate(size_t n)
 	for (; n > 0; --n)
 	{
 		auto oldData{ m_data };
-		size_t sourceStartIndex = (DATA_NUMROWS - 1) * DATA_NUMCOLS;
+		size_t sourceStartIndex = (m_rows - 1) * m_cols;
 		size_t currentSourceIndex{ sourceStartIndex };
 		for (size_t i = 0; i < m_data.size(); ++i)
 		{
 			m_data[i] = oldData[currentSourceIndex];
-			if (i % DATA_NUMCOLS == DATA_NUMCOLS - 1)
+			if (i % m_cols == m_cols - 1)
 				currentSourceIndex = ++sourceStartIndex;
 			else
-				currentSourceIndex -= DATA_NUMCOLS;
+				currentSourceIndex -= m_cols;
 		}
 	}
 	updateEdges();
 }
 
-void Tile::printRow(std::ostream& os, size_t row, bool excludeEdges) const
+void Tile::printRow(std::ostream& os, size_t row, bool includeEdges) const
 {
-	size_t edge{ excludeEdges ? 1ull : 0ull };
-	for (size_t i = row * DATA_NUMCOLS + edge; i < (row + 1) * DATA_NUMCOLS - edge; ++i)
-		os << m_data[i];
+	size_t edge{ includeEdges ? 0ull : 1ull };
+	os << m_data.substr(row * m_cols + edge, m_cols - 2*edge);
+}
+
+Tile Tile::merge(const std::vector<std::vector<Tile>>& tiles, bool includeEdges)
+{
+	std::ostringstream ss;
+	const size_t edge{ includeEdges ? 0ull : 1ull };
+	size_t numCols{ tiles[0].size() * (tiles[0][0].getNumCols() - 2*edge)};
+	size_t numRows{ tiles.size() * (tiles[0][0].getNumRows() - 2*edge)};
+
+	for (auto& tilesRow : tiles)
+	{
+		for (size_t tileRowIndex = edge; tileRowIndex < tiles[0][0].getNumRows() - edge; ++tileRowIndex)
+		{
+			for (auto& tile : tilesRow)
+			{
+				tile.printRow(ss, tileRowIndex, includeEdges);
+			}
+		}
+	}
+
+	return {0ull, ss.str(), numRows, numCols};
 }
 
 std::ostream& operator<<(std::ostream& os, const Tile& tile)
@@ -301,15 +333,8 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile)
 	for (size_t i = 0; i < tile.m_data.size(); ++i)
 	{
 		os << tile.m_data[i];
-		if (i % DATA_NUMCOLS == DATA_NUMCOLS - 1)
+		if (i % tile.m_cols == tile.m_cols - 1)
 			os << std::endl;
-	}
-	os << "edges:" << std::endl;
-	for (auto& edge : tile.m_edges)
-	{
-		for (auto c : edge)
-			os << c;
-		os << std::endl;
 	}
 	return os;
 }
@@ -320,13 +345,13 @@ std::map<size_t, Tile> parseTiles(std::istream& is)
 	std::string line;
 	
 	size_t tileIndex{ 0 };
-	std::array<char, DATA_SIZE> data{};
-	size_t bitIndex{ 0 };
+	std::ostringstream data{};
+	size_t numRows{ 0 }, numCols{ 0 };
 	while (std::getline(is, line))
 	{
 		if (line.empty())
 		{
-			tiles[tileIndex] = { tileIndex, data };
+			tiles[tileIndex] = Tile{ tileIndex, data.str(), numRows, numCols };
 			continue;
 		}
 
@@ -335,12 +360,15 @@ std::map<size_t, Tile> parseTiles(std::istream& is)
 		{
 			tileIndex = std::stoull(line.substr(indexPrefix.length(), line.find_last_of(':') - indexPrefix.length()));
 			data = {};
-			bitIndex = 0;
+			numRows = 0;
+			numCols = 0;
+			data = {};
 			continue;
 		}
-
-		for (auto ch : line)
-			data[bitIndex++] = ch;
+		
+		data << line;
+		numCols = line.length();
+		++numRows;
 	}
 	return tiles;
 }
@@ -372,37 +400,63 @@ std::map<size_t, std::vector<size_t>> findMatchIndices(const std::map<size_t, Ti
 	return result;
 }
 
-void printImage(std::ostream& os, const std::vector<std::vector<Tile>>& img, bool excludeEdges = false)
+bool markMonsters(const std::vector<std::string>& monsterPattern, Tile& tile)
 {
-	const size_t edge{ excludeEdges ? 1ull : 0ull };
-	for (auto& imgRow : img)
+	bool foundMonster{ false };
+	size_t patternLength{ monsterPattern[0].length() };
+	for (size_t row = 0; row < tile.getNumRows() - monsterPattern.size(); ++row)
 	{
-		for (size_t tileRowIndex = edge; tileRowIndex < DATA_NUMROWS - edge; ++tileRowIndex)
+		for (size_t col = 0; col < tile.getNumCols() - patternLength; ++col)
 		{
-			for (auto& tile : imgRow)
+			bool allMatch{ true };
+			for (size_t m = 0; m < monsterPattern.size() && allMatch; ++m)
 			{
-				tile.printRow(os, tileRowIndex, excludeEdges);
-				if (!excludeEdges)
-					os << ' ';
+				for (size_t n = 0; n < patternLength && allMatch; ++n)
+				{
+					if (monsterPattern[m][n] == '#' && tile(row + m, col + n) != '#')
+						allMatch = false;
+				}
+			}
+
+			if (allMatch)
+			{
+				for (size_t m = 0; m < monsterPattern.size(); ++m)
+				{
+					for (size_t n = 0; n < monsterPattern[m].length(); ++n)
+					{
+						if (monsterPattern[m][n] == '#')
+							tile(row + m, col + n) = 'O';
+					}
+				}
+			}
+			foundMonster |= allMatch;
+		}
+	}
+	return foundMonster;
+}
+
+void printImage(std::ostream& os, const std::vector<std::vector<Tile>>& img)
+{
+	for (auto& tileRow : img)
+	{
+		for (size_t rowIndex = 0; rowIndex < tileRow[0].getNumRows(); ++rowIndex)
+		{
+			for (auto& tile : tileRow)
+			{
+				tile.printRow(os, rowIndex, true);
+				os << " ";
 			}
 			os << std::endl;
 		}
-		if (!excludeEdges)
-			os << std::endl;
+		os << std::endl;
 	}
 }
-
-std::vector<std::string> createImage(const std::vector<std::vector<Tile>>& img)
-{
-
-}
-
 
 int main()
 {
 
-	std::istringstream is(EXAMPLE);
-	//std::ifstream is("input.txt");
+	//std::istringstream is(EXAMPLE);
+	std::ifstream is("input.txt");
 
 	auto tiles = parseTiles(is);
 	auto matchIndices = findMatchIndices(tiles);
@@ -418,7 +472,6 @@ int main()
 
 	std::vector<std::vector<Tile>> img{side, std::vector<Tile>{side} };
 
-	//std::set<size_t> placedTiles;
 	size_t currentTileIndex = corners[0];
 
 	// align corner tile to top left corner
@@ -455,12 +508,40 @@ int main()
 		}
 	}
 
-	printImage(std::cout, img, true);
+	//printImage(std::cout, img);
+
+	auto merged = Tile::merge(img, false);
+	//std::cout << merged << std::endl;
+
+	bool marked = markMonsters(MONSTER, merged);
+	while (!marked)
+	{
+		merged.rotate();
+		if (markMonsters(MONSTER, merged))
+			break;
+
+		merged.flipH();
+		if (markMonsters(MONSTER, merged))
+			break;
+
+		merged.flipH();
+		merged.flipV();
+		if (markMonsters(MONSTER, merged))
+			break;
+
+		merged.flipV();
+	}
+
+	//std::cout << "----------" << std::endl;
+	//std::cout << merged << std::endl;
 
 	uint64_t part1{ 1 };
 	for (auto i : corners)
 		part1 *= tiles[i].getIndex();
 
+	uint64_t part2 = merged.count('#');
+
 	std::cout << "Day20 Part 1: " << part1 << std::endl;
+	std::cout << "Day20 Part 2: " << part2 << std::endl;
 
 }
