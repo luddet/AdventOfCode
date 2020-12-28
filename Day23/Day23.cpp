@@ -10,7 +10,13 @@
 #include <random>
 #include <iomanip>
 
-#define DEBUGPRINT 0
+#define ENABLEDEBUGPRINT 0
+
+#if ENABLEDEBUGPRINT
+#define DEBUGPRINT(N) std::cout << N
+#else
+#define DEBUGPRINT(N)
+#endif
 
 const std::vector<uint32_t> INPUT = { 7,1,6,8,9,2,5,4,3 };
 const std::vector<uint32_t> EXAMPLE = { 3,8,9,1,2,5,4,6,7 };
@@ -128,84 +134,84 @@ std::array<uint32_t, NUM_CUPS> execute(const std::vector<uint32_t>& seed, const 
 	size_t currentIndex{ 0 };
 	size_t destinationIndex{ 0 };
 
-	auto cups = &cups1;
-	auto oldCups = &cups2;
-
-	&oldCups;
+	auto cupsPtr = &cups1;
+	auto oldCupsPtr = &cups2;
 
 	auto lastPrint = std::chrono::steady_clock::now();
 
 	for (size_t iteration = 1; iteration <= iterations; ++iteration)
 	{
+		auto &cups{ *cupsPtr }, &oldCups{ *oldCupsPtr };
+		
 		if (std::chrono::duration<double>(std::chrono::steady_clock::now() - lastPrint).count() > 5.0)
 		{
 			lastPrint = std::chrono::steady_clock::now();
 			std::cout << "Iteration: " << iteration << std::endl;
 		}
 
+		DEBUGPRINT("-- move " << iteration << " --" << std::endl);
 #if DEBUGPRINT
-		std::cout << "-- move " << iteration << " --" << std::endl;
 		for (size_t i = 0; i < NUM_CUPS; ++i)
 			std::cout << ((i == currentIndex) ? "(" : "") << cups[i] << ((i == currentIndex) ? ") " : " ");
-		std::cout << std::endl;
 #endif
-		std::array<uint32_t, NUM_PICKUPS> pickup{ (*cups)[(currentIndex + 1) % NUM_CUPS],
-										(*cups)[(currentIndex + 2) % NUM_CUPS],
-										(*cups)[(currentIndex + 3) % NUM_CUPS] };
-#if DEBUGPRINT
-		std::cout << "pick up: " << pickup[0] << ", " << pickup[1] << ", " << pickup[2] << std::endl;
-#endif
+		DEBUGPRINT(std::endl);
+
+		std::array<uint32_t, NUM_PICKUPS> pickup{ cups[(currentIndex + 1) % NUM_CUPS],
+										cups[(currentIndex + 2) % NUM_CUPS],
+										cups[(currentIndex + 3) % NUM_CUPS] };
+		DEBUGPRINT("pick up: " << pickup[0] << ", " << pickup[1] << ", " << pickup[2] << std::endl);
 
 #if _DEBUG
-		(*cups)[(currentIndex + 1) % NUM_CUPS] = UINT32_MAX;
-		(*cups)[(currentIndex + 2) % NUM_CUPS] = UINT32_MAX;
-		(*cups)[(currentIndex + 3) % NUM_CUPS] = UINT32_MAX;
+		cups[(currentIndex + 1) % NUM_CUPS] = UINT32_MAX;
+		cups[(currentIndex + 2) % NUM_CUPS] = UINT32_MAX;
+		cups[(currentIndex + 3) % NUM_CUPS] = UINT32_MAX;
 #endif
-		auto destinationLabel = ((*cups)[currentIndex] > 1) ? ((*cups)[currentIndex] - 1) : NUM_CUPS;
+		auto destinationLabel = (cups[currentIndex] > 1) ? (cups[currentIndex] - 1) : NUM_CUPS;
 		while (std::find(pickup.begin(), pickup.end(), destinationLabel) != pickup.end())
 			destinationLabel = destinationLabel > 1 ? destinationLabel - 1 : NUM_CUPS;
 		
-		if ((*cups)[destinationIndex + NUM_PICKUPS] != destinationLabel)
-		{
-			auto destIt = std::find(cups->rbegin(), cups->rend(), destinationLabel).base() - 1;
-			destinationIndex = std::distance(cups->begin(), destIt);
-		}
+		auto destIt = std::find(cups.rbegin(), cups.rend(), destinationLabel).base() - 1;
+		destinationIndex = std::distance(cups.begin(), destIt);
 
 		if (currentIndex > NUM_CUPS - NUM_PICKUPS - 1)
 		{
+			std::copy(cups.begin(), cups.end(), oldCups.begin());
 			for (size_t i = currentIndex + 1; i < destinationIndex + NUM_CUPS - NUM_PICKUPS + 1; ++i)
-				(*cups)[i % NUM_CUPS] = (*cups)[(i+NUM_PICKUPS) % NUM_CUPS];
-			destinationIndex -= NUM_PICKUPS;
+				oldCups[i % NUM_CUPS] = cups[(i+NUM_PICKUPS) % NUM_CUPS];
+			destinationIndex = (destinationIndex + NUM_CUPS - NUM_PICKUPS) % NUM_CUPS;
 		}
 		else if (destinationIndex > currentIndex)
 		{
-			size_t copyDest = currentIndex + 1;
-			size_t copyStart = copyDest + NUM_PICKUPS;
-			size_t copyEnd = destinationIndex + 1;
-			std::copy_n(cups + copyStart, copyEnd-copyStart, cups + copyDest);
-			destinationIndex -= NUM_PICKUPS;
+			std::copy(cups.begin(), cups.begin() + currentIndex + 1, oldCups.begin());
+			std::copy(cups.begin() + currentIndex + 1 + NUM_PICKUPS, cups.begin() + destinationIndex + 1, oldCups.begin() + currentIndex + 1);
+			std::copy(cups.begin() + destinationIndex + 1, cups.end(), oldCups.begin() + destinationIndex + 1);
+			//size_t copyDest = currentIndex + 1;
+			//size_t copyStart = copyDest + NUM_PICKUPS;
+			//size_t copyEnd = destinationIndex + 1;
+			//std::copy_n(cups + copyStart, copyEnd-copyStart, cups + copyDest);
+			destinationIndex = (destinationIndex + NUM_CUPS - NUM_PICKUPS) % NUM_CUPS;
 		}
 		else if (destinationIndex < currentIndex)
 		{
-			size_t copyStart = destinationIndex + 1;
-			size_t copyEnd = currentIndex + 1;
-			size_t copyDest = currentIndex + 1 + NUM_PICKUPS;
-			std::copy_backward(cups->begin() + copyStart, cups->begin() + copyEnd, cups->begin() + copyDest);
-			currentIndex += NUM_PICKUPS;
+			std::copy(cups.begin(), cups.begin() + destinationIndex + 1, oldCups.begin());
+			std::copy(cups.begin() + destinationIndex + 1, cups.begin() + currentIndex + 1, oldCups.begin() + destinationIndex + 1 + NUM_PICKUPS);
+			std::copy(cups.begin() + currentIndex + 1 + NUM_PICKUPS, cups.end(), oldCups.begin() + currentIndex + 1 + NUM_PICKUPS);
+			//size_t copyStart = destinationIndex + 1;
+			//size_t copyEnd = currentIndex + 1;
+			//size_t copyDest = currentIndex + 1 + NUM_PICKUPS;
+			//std::copy_backward(cups.begin() + copyStart, cups.begin() + copyEnd, cups.begin() + copyDest);
+			currentIndex = (currentIndex + NUM_PICKUPS) % NUM_CUPS;
 		}
 
-
-#if DEBUGPRINT
-		std::cout << "destination: " << destinationLabel << std::endl << std::endl;
-#endif
-
-		(*cups)[(destinationIndex + 1) % NUM_CUPS] = pickup[0];
-		(*cups)[(destinationIndex + 2) % NUM_CUPS] = pickup[1];
-		(*cups)[(destinationIndex + 3) % NUM_CUPS] = pickup[2];
+		DEBUGPRINT("destination: " << destinationLabel << std::endl << std::endl);
+		oldCups[(destinationIndex + 1) % NUM_CUPS] = pickup[0];
+		oldCups[(destinationIndex + 2) % NUM_CUPS] = pickup[1];
+		oldCups[(destinationIndex + 3) % NUM_CUPS] = pickup[2];
 
 		currentIndex = ++currentIndex % NUM_CUPS;
+		std::swap(cupsPtr, oldCupsPtr);
 	}
-	return *cups;
+	return *cupsPtr;
 }
 
 void findTests();
@@ -217,17 +223,12 @@ int main()
 
 	auto cups1 = execute<9>(in, 100);
 
+	DEBUGPRINT("-- final --" << std::endl);
 #if DEBUGPRINT
-	std::cout << "-- final --" << std::endl;
 	for (size_t i = 0; i < cups1.size(); ++i)
 		std::cout << cups1[i] << " ";
-	std::cout << std::endl;
 #endif
-
-	auto cups2 = execute<1000000>(in, 10000000);
-	auto oneIt = std::find(cups2.begin(), cups2.end(), 1ull);
-	uint64_t part2 = *(++oneIt);
-	part2 *= *(++oneIt);
+	DEBUGPRINT(std::endl);
 
 	std::cout << "Day23 Part 1: ";
 	auto start = std::distance(cups1.begin(), std::find(cups1.begin(), cups1.end(), 1ull)) + 1ull;
@@ -235,7 +236,11 @@ int main()
 		std::cout << cups1[(start + i) % cups1.size()];
 	std::cout << std::endl;
 
-	//std::cout << "Day23 Part 2: " << part2 << std::endl;
+	auto cups2 = execute<1000000>(in, 10000000);
+	auto oneIt = std::find(cups2.begin(), cups2.end(), 1ull);
+	uint64_t part2 = *(++oneIt);
+	part2 *= *(++oneIt);
+	std::cout << "Day23 Part 2: " << part2 << std::endl;
 
 
 

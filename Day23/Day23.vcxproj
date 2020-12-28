@@ -90,12 +90,13 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>/analyze:stacksize 16777216 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/analyze:stacksize 33554432 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>16777216</StackReserveSize>
+      <StackReserveSize>33554432</StackReserveSize>
+      <StackCommitSize>33554432</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -108,14 +109,15 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>/analyze:stacksize 16777216 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/analyze:stacksize 33554432 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>16777216</StackReserveSize>
+      <StackReserveSize>33554432</StackReserveSize>
+      <StackCommitSize>33554432</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -126,12 +128,13 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>/analyze:stacksize 16777216 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/analyze:stacksize 33554432 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>16777216</StackReserveSize>
+      <StackReserveSize>33554432</StackReserveSize>
+      <StackCommitSize>33554432</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -144,14 +147,15 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>/analyze:stacksize 16777216 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/analyze:stacksize 33554432 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <StackReserveSize>16777216</StackReserveSize>
+      <StackReserveSize>33554432</StackReserveSize>
+      <StackCommitSize>33554432</StackCommitSize>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
