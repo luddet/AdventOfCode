@@ -4,6 +4,9 @@
 #include <vector>
 #include <string>
 #include <unordered_set>
+#include <array>
+#include <algorithm>
+#include <iomanip>
 
 const char* EXAMPLE =
 "sesenwnenenewseeswwswswwnenewsewsw\n"
@@ -27,23 +30,66 @@ const char* EXAMPLE =
 "neswnwewnwnwseenwseesewsenwsweewe\n"
 "wseweeenwnesenwwwswnew\n";
 
-struct HexCoord
+class HexCoord
 {
+public:
 	using val_t = int32_t;
-	val_t x;
-	val_t y;
+
+	HexCoord() : m_x(0), m_y(0) {}
+	HexCoord(const std::string& dir)
+	{
+		if (dir == "e")
+		{
+			m_x = 1;
+			m_y = 0;
+		}
+		else if (dir == "w")
+		{
+			m_x = -1;
+			m_y = 0;
+		}
+		else if (dir == "ne")
+		{
+			m_x = 1;
+			m_y = -1;
+		}
+		else if (dir == "nw")
+		{
+			m_x = 0;
+			m_y = -1;
+		}
+		else if (dir == "sw")
+		{
+			m_x = -1;
+			m_y = 1;
+		}
+		else if (dir == "se")
+		{
+			m_x = 0;
+			m_y = 1;
+		}
+		else
+			throw std::exception("Parse fail");
+	}
+
+	val_t x() const { return m_x; }
+	val_t y() const { return m_y; }
 
 	bool operator==(const HexCoord& o) const
 	{
-		return x == o.x && y == o.y;
+		return m_x == o.m_x && m_y == o.m_y;
 	}
 
 	HexCoord& operator+=(const HexCoord& o)
 	{
-		x += o.x;
-		y += o.y;
+		m_x += o.m_x;
+		m_y += o.m_y;
 		return *this;
 	}
+
+private:
+	val_t m_x;
+	val_t m_y;
 };
 
 HexCoord operator+(const HexCoord& a, const HexCoord& b)
@@ -58,10 +104,16 @@ namespace std
 	{
 		size_t operator()(const HexCoord& c) const
 		{
-			return (hash<HexCoord::val_t>()(c.x) << 0)
-				^ (hash<HexCoord::val_t>()(c.y) << 1);
+			return (hash<HexCoord::val_t>()(c.x()) << 0)
+				^ (hash<HexCoord::val_t>()(c.y()) << 1);
 		}
 	};
+}
+
+std::array<HexCoord, 6> getNeighbours(const HexCoord& c)
+{
+	const static std::array<HexCoord, 6> n{ HexCoord("nw"), HexCoord("ne"),HexCoord("w"),HexCoord("e"),HexCoord("sw"),HexCoord("se") };
+	return {c + n[0], c + n[1], c + n[2], c + n[3], c + n[4], c + n[5]};
 }
 
 int main()
@@ -86,41 +138,68 @@ int main()
 				i << c;
 			}
 
-			HexCoord coord{};
-			if (i.str() == "e")
-				coord = { 1, 0 };
-			else if (i.str() == "w")
-				coord = { -1, 0 };
-			else if (i.str() == "ne")
-				coord = { 1, -1 };
-			else if (i.str() == "nw")
-				coord = { 0, -1 };
-			else if (i.str() == "sw")
-				coord = { -1, 1 };
-			else if (i.str() == "se")
-				coord = { 0, 1 };
-			else
-				throw std::exception("Parse fail");
+			
+			HexCoord coord{ i.str() };
 			paths.back().push_back(coord);
 		}
 	}
 
-	std::unordered_set<HexCoord> tiles{};
+	std::unordered_set<HexCoord> blackTiles{};
 	for (auto path : paths)
 	{
 		HexCoord c{};
 		for (auto coord : path)
 			c += coord;
 
-		auto it = tiles.find(c);
-		if (it == tiles.end())
-			tiles.insert(c);
+		auto it = blackTiles.find(c);
+		if (it == blackTiles.end())
+			blackTiles.insert(c);
 		else
-			tiles.erase(c);
+			blackTiles.erase(c);
 	}
-	auto part1 = tiles.size();
+	auto part1 = blackTiles.size();
+
+	std::unordered_set<HexCoord> blackNeighbours{}, whiteToFlip{}, blackToFlip{};
+
+	for (size_t i = 0; i < 100; ++i)
+	{
+		for (auto& black : blackTiles)
+		{
+			auto n = getNeighbours(black);
+			auto nCount = std::count_if(n.begin(), n.end(), [&](const HexCoord& c) { return blackTiles.find(c) != blackTiles.end(); });
+			if (nCount == 0 || nCount > 2)
+				blackToFlip.insert(black);
+		}
+
+		for (auto& blackTile : blackTiles)
+		{
+			auto neighbours = getNeighbours(blackTile);
+			for (auto& n : neighbours)
+				if (blackTiles.find(n) == blackTiles.end())
+					blackNeighbours.insert(n);
+		}
+
+		for (auto& white : blackNeighbours)
+		{
+			auto n = getNeighbours(white);
+			auto nCount = std::count_if(n.begin(), n.end(), [&](const HexCoord& c) { return blackTiles.find(c) != blackTiles.end(); });
+			if (nCount == 2)
+				whiteToFlip.insert(white);
+		}
+
+		for (auto w : whiteToFlip)
+			blackTiles.insert(w);
+		for (auto b : blackToFlip)
+			blackTiles.erase(b);
+
+		blackNeighbours.clear();
+		whiteToFlip.clear();
+		blackToFlip.clear();
+	}
+
+	auto part2 = blackTiles.size();
+
 	std::cout << "Day24 Part 1: " << part1 << std::endl;
-
-
+	std::cout << "Day24 Part 2: " << part2 << std::endl;
 }
 
