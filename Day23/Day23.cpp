@@ -3,298 +3,105 @@
 #include <string>
 #include <array>
 #include <cassert>
-#include <chrono>
-#include <numeric>
-#include <stack>
 #include <algorithm>
-#include <random>
-#include <iomanip>
-
-#define ENABLEDEBUGPRINT 0
-
-#if ENABLEDEBUGPRINT
-#define DEBUGPRINT(N) std::cout << N
-#else
-#define DEBUGPRINT(N)
-#endif
 
 const std::vector<uint32_t> INPUT = { 7,1,6,8,9,2,5,4,3 };
 const std::vector<uint32_t> EXAMPLE = { 3,8,9,1,2,5,4,6,7 };
 
-template<class Fun>
-class ScopeGuard
+template<size_t NUM>
+void print(const std::array<size_t, NUM>& cups, size_t start, size_t current)
 {
-public:
-	ScopeGuard(Fun fun):m_fun(fun) {}
-	~ScopeGuard() { m_fun(); }
-private:
-	Fun m_fun;
-};
-
-template<class InputIt, class T>
-InputIt hintFind(InputIt start, InputIt end, const T& value, InputIt startHint)
-{
-	constexpr uint64_t interval{ 10000 };
-
-	static uint32_t numCalls = 0;
-	static uint32_t numBack = 0;
-	static uint32_t numForward = 0;
-	static uint32_t numBackward = 0;
-	static uint32_t numFallback = 0;
-
-	//ScopeGuard guard([&]()
-	//	{
-	//		++numCalls;
-	//		if (numCalls % 10000 == 0)
-	//		{
-	//			std::cout << "numCalls: " << std::setw(6) << numCalls << " numBack: " << std::setw(6) << numBack << " , numForward: " << std::setw(6) << numForward;
-	//			std::cout << " , numBackward: " << std::setw(6) << numBackward << " , numFallback: " << std::setw(6) << numFallback << std::endl;
-	//		}
-	//	});
-
-	InputIt it;
-	if ((it = std::find(end - 3, end, value)) != end)
-	{
-		++numBack;
-		return it;
-	}
-
-	auto partEnd = startHint + std::min(uint64_t(std::distance(startHint, end)), interval);
-	if ((it = std::find(startHint, partEnd, value)) != partEnd)
-	{
-		++numForward;
-		return it;
-	}
-
-	auto rStart = std::make_reverse_iterator(startHint);
-	auto rEnd = std::make_reverse_iterator(startHint - std::min(uint64_t(std::distance(start, startHint)), interval));
-	auto rIt = std::find(rStart, rEnd , value);
-	if (rIt != rEnd)
-	{
-		++numBackward;
-		return std::prev(rIt.base());
-	}
-	
-	++numFallback;
-	return std::find(start, end, value);
-}
-
-template<class InputIt, class T>
-InputIt bisectFind(InputIt start, InputIt end, const T& value)
-{
-	std::stack<std::pair<InputIt, InputIt>> intervals;
-	InputIt s{ start }, e{ end };
+	size_t i = start;
 	do
 	{
-		if (s == e)
-		{
-			s = intervals.top().first;
-			e = intervals.top().second;
-			intervals.pop();
-		}
-		else if (*s == value)
-		{
-			return s;
-		}
+		std::cout << (i == current ? "(": "") << (i+1) << (i==current ? ") " : " ");
+		i = cups[i];
+	} while (i != start);
+	std::cout << std::endl;
+}
 
-		auto halfDistance = (std::distance(s, e) / 2);
-		if (halfDistance == 0)
-		{
-			s = e;
-			continue;
-		}
-		auto m = s + halfDistance;
-		bool goLeft = value < *m;
-		intervals.emplace((goLeft ? std::pair{ m, e } : std::pair{ s, m }));
-		if (goLeft)
-			e = m;
-		else
-			s = m;
-	} while (!intervals.empty());
+template<size_t NUM>
+void move(std::array<size_t, NUM>& cups, size_t beforeStart, size_t end, size_t dest)
+{
+	size_t temp = cups[dest];
+	cups[dest] = cups[beforeStart];
+	cups[beforeStart] = cups[end];
+	cups[end] = temp;
+}
 
-	return end;
+template<size_t NUM>
+size_t step(std::array<size_t, NUM>& cups, size_t current, size_t steps)
+{
+	size_t result{ current };
+	for (size_t i = 0; i < steps; ++i)
+		result = cups[result];
+	return result;
+}
+
+template<size_t NUM, size_t NUM_RESULT>
+std::array<size_t, NUM_RESULT> getStepArray(std::array<size_t, NUM>& cups, size_t current)
+{
+	std::array<size_t, NUM_RESULT> result;
+	result[0] = cups[current];
+	for (size_t i = 1; i < NUM_RESULT; ++i)
+		result[i] = cups[result[i-1]];
+	return result;
 }
 
 template<size_t NUM_CUPS>
-std::array<uint32_t, NUM_CUPS> execute(const std::vector<uint32_t>& seed, const size_t iterations)
+std::array<size_t, NUM_CUPS> execute(const std::vector<uint32_t>& seed, const size_t iterations)
 {
 	constexpr size_t NUM_PICKUPS{ 3 };
 	assert(NUM_CUPS >= seed.size());
-	std::array<uint32_t, NUM_CUPS> cups1;
-	std::array<uint32_t, NUM_CUPS> cups2;
+	std::array<size_t, NUM_CUPS> cups{};
 
+	size_t current{ seed[0] - 1 };
+	size_t start{ seed[0] - 1 };
 
 //	// copy seed and fill rest incrementally
-	auto next = std::copy(seed.begin(), seed.end(), cups1.begin());
-	auto seedMax = *std::max_element(seed.begin(), seed.end());
-	if (next != cups1.end())
-		std::iota(next, cups1.end(), seedMax + 1);
-	std::copy(cups1.begin(), cups1.end(), cups2.begin());
+	for (size_t i = 0; i < seed.size(); ++i)
+		cups[seed[i]-1] = seed[(i + 1) % seed.size()]-1;
 
-	size_t currentIndex{ 0 };
-	size_t destinationIndex{ 0 };
-
-	auto cupsPtr = &cups1;
-	auto oldCupsPtr = &cups2;
-
-	auto lastPrint = std::chrono::steady_clock::now();
+	if (NUM_CUPS > seed.size())
+	{
+		size_t lastSeed = seed.back() - 1;
+		size_t seedMax = *std::max_element(seed.begin(), seed.end());
+		size_t nextIndex{ seedMax };
+		cups[lastSeed] = nextIndex;
+		std::generate(cups.begin() + nextIndex, cups.end(), [&]() { return (++nextIndex < NUM_CUPS) ? nextIndex : start; });
+	}
 
 	for (size_t iteration = 1; iteration <= iterations; ++iteration)
 	{
-		auto &cups{ *cupsPtr }, &oldCups{ *oldCupsPtr };
-		
-		if (std::chrono::duration<double>(std::chrono::steady_clock::now() - lastPrint).count() > 5.0)
-		{
-			lastPrint = std::chrono::steady_clock::now();
-			std::cout << "Iteration: " << iteration << std::endl;
-		}
+		size_t destination = (current > 0) ? current - 1 : NUM_CUPS - 1;
+		auto pickups = getStepArray<NUM_CUPS, NUM_PICKUPS>(cups, current);
 
-		DEBUGPRINT("-- move " << iteration << " --" << std::endl);
-#if DEBUGPRINT
-		for (size_t i = 0; i < NUM_CUPS; ++i)
-			std::cout << ((i == currentIndex) ? "(" : "") << cups[i] << ((i == currentIndex) ? ") " : " ");
-#endif
-		DEBUGPRINT(std::endl);
+		while (std::find(pickups.begin(), pickups.end(), destination) != pickups.end())
+			destination = (destination > 0) ? destination - 1 : NUM_CUPS - 1;
 
-		std::array<uint32_t, NUM_PICKUPS> pickup{ cups[(currentIndex + 1) % NUM_CUPS],
-										cups[(currentIndex + 2) % NUM_CUPS],
-										cups[(currentIndex + 3) % NUM_CUPS] };
-		DEBUGPRINT("pick up: " << pickup[0] << ", " << pickup[1] << ", " << pickup[2] << std::endl);
-
-#if _DEBUG
-		cups[(currentIndex + 1) % NUM_CUPS] = UINT32_MAX;
-		cups[(currentIndex + 2) % NUM_CUPS] = UINT32_MAX;
-		cups[(currentIndex + 3) % NUM_CUPS] = UINT32_MAX;
-#endif
-		auto destinationLabel = (cups[currentIndex] > 1) ? (cups[currentIndex] - 1) : NUM_CUPS;
-		while (std::find(pickup.begin(), pickup.end(), destinationLabel) != pickup.end())
-			destinationLabel = destinationLabel > 1 ? destinationLabel - 1 : NUM_CUPS;
-		
-		auto destIt = std::find(cups.rbegin(), cups.rend(), destinationLabel).base() - 1;
-		destinationIndex = std::distance(cups.begin(), destIt);
-
-		if (currentIndex > NUM_CUPS - NUM_PICKUPS - 1)
-		{
-			std::copy(cups.begin(), cups.end(), oldCups.begin());
-			for (size_t i = currentIndex + 1; i < destinationIndex + NUM_CUPS - NUM_PICKUPS + 1; ++i)
-				oldCups[i % NUM_CUPS] = cups[(i+NUM_PICKUPS) % NUM_CUPS];
-			destinationIndex = (destinationIndex + NUM_CUPS - NUM_PICKUPS) % NUM_CUPS;
-		}
-		else if (destinationIndex > currentIndex)
-		{
-			std::copy(cups.begin(), cups.begin() + currentIndex + 1, oldCups.begin());
-			std::copy(cups.begin() + currentIndex + 1 + NUM_PICKUPS, cups.begin() + destinationIndex + 1, oldCups.begin() + currentIndex + 1);
-			std::copy(cups.begin() + destinationIndex + 1, cups.end(), oldCups.begin() + destinationIndex + 1);
-			//size_t copyDest = currentIndex + 1;
-			//size_t copyStart = copyDest + NUM_PICKUPS;
-			//size_t copyEnd = destinationIndex + 1;
-			//std::copy_n(cups + copyStart, copyEnd-copyStart, cups + copyDest);
-			destinationIndex = (destinationIndex + NUM_CUPS - NUM_PICKUPS) % NUM_CUPS;
-		}
-		else if (destinationIndex < currentIndex)
-		{
-			std::copy(cups.begin(), cups.begin() + destinationIndex + 1, oldCups.begin());
-			std::copy(cups.begin() + destinationIndex + 1, cups.begin() + currentIndex + 1, oldCups.begin() + destinationIndex + 1 + NUM_PICKUPS);
-			std::copy(cups.begin() + currentIndex + 1 + NUM_PICKUPS, cups.end(), oldCups.begin() + currentIndex + 1 + NUM_PICKUPS);
-			//size_t copyStart = destinationIndex + 1;
-			//size_t copyEnd = currentIndex + 1;
-			//size_t copyDest = currentIndex + 1 + NUM_PICKUPS;
-			//std::copy_backward(cups.begin() + copyStart, cups.begin() + copyEnd, cups.begin() + copyDest);
-			currentIndex = (currentIndex + NUM_PICKUPS) % NUM_CUPS;
-		}
-
-		DEBUGPRINT("destination: " << destinationLabel << std::endl << std::endl);
-		oldCups[(destinationIndex + 1) % NUM_CUPS] = pickup[0];
-		oldCups[(destinationIndex + 2) % NUM_CUPS] = pickup[1];
-		oldCups[(destinationIndex + 3) % NUM_CUPS] = pickup[2];
-
-		currentIndex = ++currentIndex % NUM_CUPS;
-		std::swap(cupsPtr, oldCupsPtr);
+		move(cups, current, step(cups, current, NUM_PICKUPS), destination);
+		current = cups[current];
 	}
-	return *cupsPtr;
+	return cups;
 }
-
-void findTests();
-void findTests2();
 
 int main()
 {
 	auto& in = INPUT;
-
 	auto cups1 = execute<9>(in, 100);
 
-	DEBUGPRINT("-- final --" << std::endl);
-#if DEBUGPRINT
-	for (size_t i = 0; i < cups1.size(); ++i)
-		std::cout << cups1[i] << " ";
-#endif
-	DEBUGPRINT(std::endl);
-
 	std::cout << "Day23 Part 1: ";
-	auto start = std::distance(cups1.begin(), std::find(cups1.begin(), cups1.end(), 1ull)) + 1ull;
-	for (size_t i = 0; i < cups1.size() - 1; ++i)
-		std::cout << cups1[(start + i) % cups1.size()];
+	auto current = cups1[0];
+	while (current != 0)
+	{
+		std::cout << current + 1;
+		current = cups1[current];
+	}
 	std::cout << std::endl;
 
 	auto cups2 = execute<1000000>(in, 10000000);
-	auto oneIt = std::find(cups2.begin(), cups2.end(), 1ull);
-	uint64_t part2 = *(++oneIt);
-	part2 *= *(++oneIt);
-	std::cout << "Day23 Part 2: " << part2 << std::endl;
 
-
-
-}
-
-
-void findTests()
-{
-	std::array<uint32_t, 200000> test;
-	std::iota(test.begin(), test.end(), 0ul);
-
-	for (size_t i = 0; i < test.size(); ++i)
-	{
-		auto rnd = ((50 * rand()) / RAND_MAX) - 25;
-		std::swap(test[i], test[std::abs(int(i + rnd)) % test.size()]);
-	}
-
-	std::cout << "bisect... ";
-
-	auto start = std::chrono::steady_clock::now();
-	for (size_t i = 0; i < test.size(); ++i)
-	{
-		auto it = bisectFind(test.begin(), test.end(), i);
-		//if (i % 1000 == 0)
-		//	std::cout << i << " -> " << *it << ": " << (i == *it ? " !" : " FAIL")  << std::endl;
-	}
-	auto bisectTime = std::chrono::steady_clock::now() - start;
-	std::cout << "done." << std::endl;
-
-	std::cout << "std::find...." << std::endl;
-	start = std::chrono::steady_clock::now();
-	for (size_t i = 0; i < test.size(); ++i)
-	{
-		auto it = std::find(test.begin(), test.end(), i);
-		//if (i % 1000 == 0)
-		//	std::cout << i << " -> " << *it << ": " << (i == *it ? " !" : " FAIL") << std::endl;
-	}
-	auto findTime = std::chrono::steady_clock::now() - start;
-	std::cout << "done." << std::endl;
-
-	std::cout << "bisect: " << std::chrono::duration<double>(bisectTime).count() << std::endl;
-	std::cout << "std::find: " << std::chrono::duration<double>(findTime).count() << std::endl;
-}
-
-
-void findTests2()
-{
-	std::array<uint32_t, 12> test;
-	std::iota(test.begin(), test.end(), 0ul);
-
-	for (size_t i = 0; i < test.size(); ++i)
-	{
-		auto it = hintFind(test.begin(), test.end(), i, test.begin() + 5);
-		//if (i % 1000 == 0)
-		std::cout << i << " -> " << *it << ": " << (i == *it ? " !" : " FAIL")  << std::endl;
-	}
+	uint64_t first = cups2[0]+1;
+	uint64_t second = cups2[first-1]+1;
+	std::cout << "Day23 Part 2: " << first * second << std::endl;
 }
