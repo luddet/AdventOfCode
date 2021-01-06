@@ -1,0 +1,54 @@
+﻿Moved all to 2018
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch master
+# Your branch is up-to-date with 'origin/master'.
+#
+# Changes to be committed:
+#	renamed:    .gitattributes -> 2018/.gitattributes
+#	renamed:    .gitignore -> 2018/.gitignore
+#	renamed:    AdventOfCode2018.sln -> 2018/AdventOfCode2018.sln
+#	renamed:    Day01/App.config -> 2018/Day01/App.config
+#	renamed:    Day01/Day01.cs -> 2018/Day01/Day01.cs
+#	renamed:    Day01/Day01.csproj -> 2018/Day01/Day01.csproj
+#	renamed:    Day01/Properties/AssemblyInfo.cs -> 2018/Day01/Properties/AssemblyInfo.cs
+#	renamed:    Day01/input.txt -> 2018/Day01/input.txt
+#	renamed:    Day01/packages.config -> 2018/Day01/packages.config
+#	renamed:    Day02/App.config -> 2018/Day02/App.config
+#	renamed:    Day02/Day02.cs -> 2018/Day02/Day02.cs
+#	renamed:    Day02/Day02.csproj -> 2018/Day02/Day02.csproj
+#	renamed:    Day02/Properties/AssemblyInfo.cs -> 2018/Day02/Properties/AssemblyInfo.cs
+#	renamed:    Day02/input.txt -> 2018/Day02/input.txt
+#	renamed:    Day02/packages.config -> 2018/Day02/packages.config
+#	renamed:    Day03/App.config -> 2018/Day03/App.config
+#	renamed:    Day03/Day03.cs -> 2018/Day03/Day03.cs
+#	renamed:    Day03/Day03.csproj -> 2018/Day03/Day03.csproj
+#	renamed:    Day03/Properties/AssemblyInfo.cs -> 2018/Day03/Properties/AssemblyInfo.cs
+#	renamed:    Day03/input.txt -> 2018/Day03/input.txt
+#	renamed:    Day03/packages.config -> 2018/Day03/packages.config
+#	renamed:    Day04/App.config -> 2018/Day04/App.config
+#	renamed:    Day04/Day04.csproj -> 2018/Day04/Day04.csproj
+#	renamed:    Day04/Day04Tests.cs -> 2018/Day04/Day04Tests.cs
+#	renamed:    Day04/Program.cs -> 2018/Day04/Program.cs
+#	renamed:    Day04/Properties/AssemblyInfo.cs -> 2018/Day04/Properties/AssemblyInfo.cs
+#	renamed:    Day04/input.txt -> 2018/Day04/input.txt
+#	renamed:    Day04/packages.config -> 2018/Day04/packages.config
+#	renamed:    Day05/App.config -> 2018/Day05/App.config
+#	renamed:    Day05/Day05.csproj -> 2018/Day05/Day05.csproj
+#	renamed:    Day05/Program.cs -> 2018/Day05/Program.cs
+#	renamed:    Day05/Properties/AssemblyInfo.cs -> 2018/Day05/Properties/AssemblyInfo.cs
+#	renamed:    Day05/input.txt -> 2018/Day05/input.txt
+#	renamed:    Day05/packages.config -> 2018/Day05/packages.config
+#	renamed:    Day06/App.config -> 2018/Day06/App.config
+#	renamed:    Day06/Day06.csproj -> 2018/Day06/Day06.csproj
+#	renamed:    Day06/Program.cs -> 2018/Day06/Program.cs
+#	renamed:    Day06/Properties/AssemblyInfo.cs -> 2018/Day06/Properties/AssemblyInfo.cs
+#	renamed:    Day06/input.txt -> 2018/Day06/input.txt
+#	renamed:    LICENSE -> 2018/LICENSE
+#	renamed:    README.md -> 2018/README.md
+#
+# Untracked files:
+#	najp4nkx.14d.txt
+#
+
