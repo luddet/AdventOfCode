@@ -192,6 +192,8 @@ template<class ReactionsContainer>
 bool produce(size_t index, size_t amount, store_t& store, ReactionsContainer& reactions)
 {
 	std::stack<std::tuple<size_t, size_t>> productionStack;
+	std::vector<std::tuple<size_t, uint64_t>> missingChems;
+
 	productionStack.push({ index, amount });
 	while (!productionStack.empty())
 	{
@@ -215,16 +217,13 @@ bool produce(size_t index, size_t amount, store_t& store, ReactionsContainer& re
 		uint64_t batchesToProduce = ((amountNeeded / batchSize) + (amountNeeded % batchSize == 0 ? 0 : 1));
 
 		// check store for needed chems for top
-		std::vector<std::tuple<size_t, uint64_t>> missingChems;
-		std::for_each(std::begin(reaction.getInputs()), std::end(reaction.getInputs()), [&store, &missingChems, batchesToProduce](Reaction::input_t input)
-			{
-				size_t inputIndex = std::get<0>(input);
-				uint64_t inputAmountRequired = std::get<1>(input) * batchesToProduce;
+		for (auto [inputIndex, inputAmountRequired] : reaction.getInputs())
+		{
+			inputAmountRequired *= batchesToProduce;
 
-				uint64_t amountInStore = store[inputIndex];
-				if (amountInStore < inputAmountRequired)
-					missingChems.push_back({ inputIndex, inputAmountRequired });
-			});
+			if (store[inputIndex] < inputAmountRequired)
+				missingChems.push_back({ inputIndex, inputAmountRequired });
+		}
 
 		// if store contains enough
 		if (missingChems.empty())
@@ -244,10 +243,9 @@ bool produce(size_t index, size_t amount, store_t& store, ReactionsContainer& re
 		else // else for each insufficient chem
 		{
 			// find chem reaction and push on productionstack
-			std::for_each(missingChems.begin(), missingChems.end(), [&productionStack](auto t)
-				{
-					productionStack.push(t);
-				});
+			for (auto& chem : missingChems)
+				productionStack.push(chem);
+			missingChems.clear();
 		}
 	}
 	return true;
