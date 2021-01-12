@@ -93,7 +93,7 @@ public:
 	using input_t = std::tuple<size_t, size_t>;
 	using input_container_t = std::vector<input_t>;
 
-	Reaction() = default;
+	Reaction() : m_output{}, m_outputCount{ 0 }, m_inputs{} {}
 	Reaction(size_t output, size_t outputCount, const input_container_t& inputs)
 		: m_output(output),
 		m_outputCount(outputCount),
