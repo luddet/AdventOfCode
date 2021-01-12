@@ -189,66 +189,96 @@ parseReactions(std::istream& stream, reactionIndexToNameMapping_t& mapping)
 using store_t = std::vector<size_t>;
 
 template<class ReactionsContainer>
-bool produce(size_t index, size_t amount, store_t& store, ReactionsContainer& reactions)
+size_t produce(size_t index, uint32_t amount, store_t& store, ReactionsContainer& reactions)
 {
-	std::stack<std::tuple<size_t, size_t>> productionStack;
-	std::vector<std::tuple<size_t, uint64_t>> missingChems;
+	std::vector<size_t> productionIndexStack;
+	std::vector<size_t> productionAmountStack;
+	productionIndexStack.reserve(100);
+	productionAmountStack.reserve(100);
 
-	productionStack.push({ index, amount });
-	while (!productionStack.empty())
+	std::vector<size_t> missingChemsIndex;
+	std::vector<size_t> missingChemsAmount;
+	missingChemsIndex.reserve(100);
+	missingChemsAmount.reserve(100);
+
+	size_t amountProduced{ 0 };
+	productionIndexStack.emplace_back(index);
+	productionAmountStack.emplace_back(store[index] + 1);
+	while (!productionIndexStack.empty())
 	{
 		// get top
-		const auto& [indexToProduce, amountToProduce] = productionStack.top();
-		const Reaction& reaction = reactions[indexToProduce];
+		size_t indexToProduce = productionIndexStack.back();
+		size_t amountToProduce = productionAmountStack.back();
 
 		uint64_t amountInStore = store[indexToProduce];
 		if (amountInStore >= amountToProduce) // already enough in store
 		{
-			productionStack.pop();
+			productionIndexStack.pop_back();
+			productionAmountStack.pop_back();
 			continue;
 		}
 
-		uint64_t amountNeeded = amountToProduce - amountInStore;
+		auto amountNeeded = uint32_t(amountToProduce - amountInStore);
 
-		uint64_t batchSize = reaction.getOutputCount();
+		const Reaction& reaction = reactions[indexToProduce];
+		auto batchSize = uint32_t(reaction.getOutputCount());
 		if (batchSize == 0) // This reaction (ORE) yields nothing
-			return false;
+			return amountProduced;
 
-		uint64_t batchesToProduce = ((amountNeeded / batchSize) + (amountNeeded % batchSize == 0 ? 0 : 1));
+		auto batchesToProduce = amountNeeded / batchSize;
+		if (amountNeeded % batchSize > 0)
+			++batchesToProduce;
 
+		auto& inputs = reaction.getInputs();
 		// check store for needed chems for top
-		for (auto [inputIndex, inputAmountRequired] : reaction.getInputs())
+		for (auto [inputIndex, inputAmountRequired] : inputs)
 		{
 			inputAmountRequired *= batchesToProduce;
 
 			if (store[inputIndex] < inputAmountRequired)
-				missingChems.push_back({ inputIndex, inputAmountRequired });
+			{
+				missingChemsIndex.emplace_back(inputIndex);
+				missingChemsAmount.emplace_back(inputAmountRequired);
+			}
 		}
 
 		// if store contains enough
-		if (missingChems.empty())
+		if (missingChemsIndex.empty())
 		{
 			// reduce store
-			std::for_each(std::begin(reaction.getInputs()), std::end(reaction.getInputs()), [&store, batchesToProduce](Reaction::input_t input)
-				{
-					size_t inputIndex = std::get<0>(input);
-					size_t inputAmountRequired = std::get<1>(input) * batchesToProduce;
-					store[inputIndex] -= inputAmountRequired;
-				});
+			for (auto [inputIndex, inputAmountRequired] : inputs)
+			{
+				inputAmountRequired *= batchesToProduce;
+				store[inputIndex] -= inputAmountRequired;
+			}
 			// and add output to store
-			store[indexToProduce] += batchesToProduce * batchSize;
+			store[indexToProduce] += uint64_t(batchesToProduce) * batchSize;
 
-			productionStack.pop();
+			productionIndexStack.pop_back();
+			productionAmountStack.pop_back();
+			if (productionIndexStack.empty())
+			{
+				++amountProduced;
+				if (amountProduced < amount)
+				{
+					productionIndexStack.emplace_back(index);
+					productionAmountStack.emplace_back(store[index]+1);
+				}
+			}
 		}
 		else // else for each insufficient chem
 		{
 			// find chem reaction and push on productionstack
-			for (auto& chem : missingChems)
-				productionStack.push(chem);
-			missingChems.clear();
+			for (auto missingIndex : missingChemsIndex)
+				productionIndexStack.emplace_back(missingIndex);
+			for (auto missingAmount : missingChemsAmount)
+				productionAmountStack.emplace_back(missingAmount);
+
+			missingChemsIndex.clear();
+			missingChemsAmount.clear();
 		}
 	}
-	return true;
+	return amountProduced;
 }
 
 bool runTests()
@@ -297,23 +327,22 @@ int main()
 	chemicalStore[oreIndex] = initialOreAmount;
 
 	auto startTime = std::chrono::high_resolution_clock::now();
-	double outputInterval = 10.0;
+	double outputInterval = 5.0;
 	auto lastOutputTime = startTime;
 	produce(fuelIndex, 1, chemicalStore, reactions);
 
 	auto oreUsedFor1Fuel = initialOreAmount - chemicalStore[oreIndex];
 	size_t totalFuelProduced = 0;
 	// Naive brute force production
-	while (produce(fuelIndex, 1, chemicalStore, reactions))
+	while (produce(fuelIndex, 250000, chemicalStore, reactions) > 0)
 	{
-		totalFuelProduced += chemicalStore[fuelIndex];
-		chemicalStore[fuelIndex] = 0;
+		totalFuelProduced = chemicalStore[fuelIndex];
 
 		auto now = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> totalDuration = now - startTime;
 		std::chrono::duration<double> timeSinceLastOutput = now - lastOutputTime;
 		if (timeSinceLastOutput.count() >= outputInterval)
 		{
+			std::chrono::duration<double> totalDuration = now - startTime;
 			uint64_t oreLeftInStore = chemicalStore[oreIndex];
 			std::cout << "Ore left: " << oreLeftInStore << ", Fuel produced: " << totalFuelProduced << ", Fuel/s: " << totalFuelProduced / totalDuration.count() << std::endl;
 			lastOutputTime = now;
