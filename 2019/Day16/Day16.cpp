@@ -10,6 +10,8 @@
 #include <functional>
 #include <numeric>
 #include <chrono>
+#include <ppl.h>
+#include <concrtrm.h>
 
 class ScopeTimer
 {
@@ -53,44 +55,33 @@ std::vector<int64_t> transform(const std::vector<uint8_t>& list, size_t iteratio
 	std::chrono::duration<double> time;
 	{
 		ScopeTimer timer(time);
-
-		auto startTime = std::chrono::steady_clock::now();
-		auto lastPrint = startTime;
 		for (size_t iteration = 0; iteration < iterations; ++iteration)
 		{
 			std::partial_sum(output.begin(), output.end(), partials.begin());
+			
+			int64_t sum{ 0 }, factor{ 1 };
+			for (size_t i = 0; i < listSize; i += 2, factor = -factor)
+				sum += factor * output[i];
+			output[0] = abs(sum) % 10;
 
-			{
-				int f = 1;
-				int64_t sum = 0;
-				for (size_t i = 0; i < listSize; i += 2, f = -f)
-					sum += f * output[i];
-				output[0] = abs(sum) % 10;
-			}
+			concurrency::parallel_for(size_t(1), listSize / 2, [listSize, &partials, &output](size_t i) 
+				{
+					const size_t stepSize{ 2 * (i + 1) };
+					size_t startIndex{ i }, endIndex{ startIndex + i };
+					int64_t factor = 1;
+					int64_t sum = 0;
+					for (; endIndex < listSize; startIndex += stepSize, endIndex += stepSize, factor = -factor)
+						sum += factor * (partials[endIndex] - partials[startIndex - 1]);
 
-			for (size_t i = 1; i < listSize; ++i)
-			{
-				size_t stepSize = 2 * (i + 1);
-				size_t startIndex = i;
-				size_t endIndex = startIndex + i;
-				int64_t factor = 1;
-				int64_t sum = 0;
-				for (; startIndex < listSize; startIndex += stepSize, endIndex += stepSize, factor = -factor)
-					sum += factor * (partials[std::min(endIndex, listSize - 1)] - partials[startIndex - 1]);
+					if (startIndex < listSize)
+						sum += factor * (partials[listSize - 1] - partials[startIndex - 1]);
 
-				output[i] = abs(sum) % 10;
-			}
-
-			auto now = std::chrono::steady_clock::now();
-			auto timeSinceLast = std::chrono::duration<double>(now - lastPrint).count();
-			auto timeSinceStart = std::chrono::duration<double>(now - startTime).count();
-
-			if (timeSinceLast > 5)
-			{
-				std::cout << "iteration: " << iteration
-					<< ", time/iteration (s): " << timeSinceStart / double_t(iteration + 1) << std::endl;
-				lastPrint = now;
-			}
+					output[i] = abs(sum) % 10;
+				});
+			
+			int64_t last = partials.back();
+			for (size_t i = listSize/2; i < listSize; ++i)
+				output[i] = (last - partials[i-1]) % 10;
 		}
 	}
 	std::cout << "total time (s): " << time.count() << std::endl;
