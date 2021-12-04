@@ -3,7 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <numeric>
-#include "utilities.h"
+#include <vector>
+#include "../Utilities/utilities.h"
 
 uint32_t part1(const std::vector<int>& values)
 {

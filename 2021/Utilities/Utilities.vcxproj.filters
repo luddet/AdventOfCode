@@ -24,12 +24,18 @@
     <ClInclude Include="dllexport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

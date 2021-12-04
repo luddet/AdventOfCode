@@ -1,6 +1,7 @@
+#include "pch.h"
 #include "utilities.h"
 
-std::vector<int> readInts(std::istream& os)
+DLLEXPORT std::vector<int> readInts(std::istream& os)
 {
 	std::vector<int> result;
 	while (!os.eof())
