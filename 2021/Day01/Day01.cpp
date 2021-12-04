@@ -2,20 +2,53 @@
 
 #include <iostream>
 #include <fstream>
+#include <numeric>
+#include "utilities.h"
 
-int main()
+uint32_t part1(const std::vector<int>& values)
 {
-    std::ifstream is("input.txt");
     uint32_t lastDepth, currentDepth;
     uint32_t numIncrements(0);
 
-    is >> lastDepth;
-    while (!is.eof())
+    auto it = std::begin(values);
+    lastDepth = *(it++);
+    while (it != std::end(values))
     {
-        is >> currentDepth;
+        currentDepth = *(it++);
         if (currentDepth > lastDepth)
             ++numIncrements;
         lastDepth = currentDepth;
     }
-    std::cout << "Day01 part 1: " << numIncrements << std::endl;
+    return numIncrements;
+}
+
+uint32_t part2(const std::vector<int>& values)
+{
+    uint32_t numIncrements(0);
+    auto wStart = std::begin(values);
+    auto wEnd = std::next(std::begin(values), 3);
+    int lastWindow(std::accumulate(wStart, wEnd, 0));
+    int currentWindow(lastWindow);
+
+    while (wEnd != std::end(values))
+    {
+        currentWindow -= *wStart;
+        std::advance(wStart, 1);
+        currentWindow += *wEnd;
+        std::advance(wEnd, 1);
+
+        if (currentWindow > lastWindow)
+            ++numIncrements;
+        lastWindow = currentWindow;
+    }
+    return numIncrements;
+}
+
+int main()
+{
+    std::ifstream ifs("input.txt");
+    auto values = readInts(ifs);
+
+    std::cout << "Day01 part 1: " << part1(values) << std::endl;
+    std::cout << "Day02 part 2: " << part2(values) << std::endl;
 }
