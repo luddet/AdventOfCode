@@ -8,17 +8,6 @@
 
 #include "../Utilities/utilities.h"
 
-std::vector<std::string> readLines(const std::string& filePath)
-{
-    std::ifstream ifs(filePath);
-    std::string line;
-    std::vector<std::string> result;
-    while (std::getline(ifs, line))
-        result.push_back(line);
-    return result;
-}
-
-
 int part1(std::vector<std::tuple<std::string, int>>& instructions)
 {
     int pos(0), depth(0);
