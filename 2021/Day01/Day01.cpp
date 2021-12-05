@@ -51,5 +51,5 @@ int main()
     auto values = readInts(ifs);
 
     std::cout << "Day01 part 1: " << part1(values) << std::endl;
-    std::cout << "Day02 part 2: " << part2(values) << std::endl;
+    std::cout << "Day01 part 2: " << part2(values) << std::endl;
 }
