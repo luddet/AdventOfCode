@@ -2,8 +2,13 @@
 #include <cassert>
 #include <iostream>
 #include <vector>
+#include <concepts>
+#include <ranges>
 
 #include "../Utilities/utilities.h"
+
+using std::ranges::sized_range;
+
 namespace
 {
 constexpr size_t NUM_BITS(12);
@@ -23,7 +28,7 @@ int part1(const std::vector<std::string>& lines)
 		}
 	}
 
-	uint16_t gamma(0);
+	uint16_t gamma{ 0 };
 	size_t numLines(lines.size());
 	for (size_t i = 0; i < NUM_BITS; ++i)
 	{
@@ -34,7 +39,7 @@ int part1(const std::vector<std::string>& lines)
 	return epsilon * gamma;
 }
 
-int part2(const std::vector<std::string>& lines)
+int part2(const sized_range auto& lines)
 {
 	std::vector<uint16_t> numbers(lines.size());
 	for (auto& line : lines)
@@ -54,8 +59,8 @@ int part2(const std::vector<std::string>& lines)
 		}
 	}
 
-	uint16_t o2_criteria(0);
-	uint16_t co2_criteria(0);
+	uint16_t o2_criteria{ 0 };
+	uint16_t co2_criteria{ 0 };
 
 	for (size_t bit = 0; bit < NUM_BITS; ++bit)
 	{
@@ -63,11 +68,11 @@ int part2(const std::vector<std::string>& lines)
 		co2_criteria |= (numOnes[bit] < numZeros[bit]) ? 1 << bit : 0;
 	}
 
-	auto o2nums(numbers);
+	auto o2nums{ numbers };
 	for (size_t bit = 0; bit < NUM_BITS; ++bit)
 	{
 		uint16_t bitMask = o2_criteria & (1 << bit);
-		uint16_t numErased(0);
+		uint16_t numErased{ 0 };
 		std::erase_if(o2nums, [&o2nums, bitMask, &numErased](uint16_t n) {
 			bool erase = (n & bitMask) == 0 && o2nums.size() > numErased + 1;
 			if (erase)
@@ -78,7 +83,7 @@ int part2(const std::vector<std::string>& lines)
 			break;
 	}
 
-	auto co2nums(numbers);
+	auto co2nums{ numbers };
 	for (size_t bit = 0; bit < NUM_BITS; ++bit)
 	{
 		uint16_t bitMask = co2_criteria & (1 << bit);
@@ -95,7 +100,7 @@ int part2(const std::vector<std::string>& lines)
 
 int main()
 {
-	auto lines(readLines("input.txt"));
+	auto lines{ readLines("input.txt") };
 	std::cout << "Day03 part 1: " << part1(lines) << std::endl;
 	std::cout << "Day03 part 2: " << part2(lines) << std::endl;
 }
