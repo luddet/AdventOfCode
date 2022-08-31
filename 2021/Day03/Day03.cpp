@@ -1,9 +1,11 @@
 #include <algorithm>
 #include <cassert>
+#include <execution>
 #include <iostream>
 #include <vector>
 #include <concepts>
 #include <ranges>
+#include <numeric>
 
 #include "../Utilities/utilities.h"
 
@@ -11,7 +13,7 @@ using std::ranges::sized_range;
 
 namespace
 {
-constexpr size_t NUM_BITS(12);
+constexpr auto NUM_BITS{ 12U };
 }
 
 int part1(const std::vector<std::string>& lines)
@@ -41,60 +43,37 @@ int part1(const std::vector<std::string>& lines)
 
 int part2(const sized_range auto& lines)
 {
-	std::vector<uint16_t> numbers(lines.size());
-	for (auto& line : lines)
-		numbers.push_back(std::stoi(line, nullptr, 2));
+	std::vector<uint16_t> numbers;
+	std::transform(begin(lines), end(lines), std::back_inserter(numbers), [](auto line) { return std::stoi(line, nullptr, 2); });
 
-	uint32_t numOnes[NUM_BITS]{ 0,0,0,0,0,0,0,0,0,0,0,0 };
-	uint32_t numZeros[NUM_BITS]{ 0,0,0,0,0,0,0,0,0,0,0,0 };
-
-	for (auto n : numbers)
+	auto calculate = [numBits = lines.front().length()](const auto& numbers, auto criteria) -> uint16_t
 	{
-		for (size_t bit = 0; bit < NUM_BITS; ++bit)
+		auto workingSet{ numbers };
+		auto currentBit = numBits;
+		while (workingSet.size() > 1 && currentBit > 0)
 		{
-			if ((n & (1 << bit)) != 0)
-				++numOnes[bit];
-			else
-				++numZeros[bit];
+			std::vector<uint16_t> ones;
+			std::vector<uint16_t> zeros;
+
+			--currentBit;
+			std::for_each(begin(workingSet), end(workingSet), [=, &ones, &zeros](auto n)
+			{
+				if (((n >> currentBit) & 1) == 1)
+					ones.push_back(n);
+				else
+					zeros.push_back(n);
+			});
+
+			workingSet = criteria(ones.size(), zeros.size()) ? std::move(ones) : std::move(zeros);
 		}
-	}
+		assert(workingSet.size() == 1);
+		return workingSet.front();
+	};
 
-	uint16_t o2_criteria{ 0 };
-	uint16_t co2_criteria{ 0 };
+	auto oxygenGeneratorRating = calculate(numbers, [](auto ones, auto zeros) {return ones >= zeros; });
+	auto co2ScrubberRating = calculate(numbers, [](auto ones, auto zeros) {return ones < zeros; });
 
-	for (size_t bit = 0; bit < NUM_BITS; ++bit)
-	{
-		o2_criteria |= (numOnes[bit] >= numZeros[bit]) ? 1 << bit : 0;
-		co2_criteria |= (numOnes[bit] < numZeros[bit]) ? 1 << bit : 0;
-	}
-
-	auto o2nums{ numbers };
-	for (size_t bit = 0; bit < NUM_BITS; ++bit)
-	{
-		uint16_t bitMask = o2_criteria & (1 << bit);
-		uint16_t numErased{ 0 };
-		std::erase_if(o2nums, [&o2nums, bitMask, &numErased](uint16_t n) {
-			bool erase = (n & bitMask) == 0 && o2nums.size() > numErased + 1;
-			if (erase)
-				++numErased;
-			return erase;
-		});
-		if (o2nums.size() == 1)
-			break;
-	}
-
-	auto co2nums{ numbers };
-	for (size_t bit = 0; bit < NUM_BITS; ++bit)
-	{
-		uint16_t bitMask = co2_criteria & (1 << bit);
-		std::erase_if(co2nums, [&co2nums, bitMask](uint16_t n) {
-			return (n & bitMask) == 0 && co2nums.size() > 1;
-		});
-		if (co2nums.size() == 1)
-			break;
-	}
-
-	return o2nums[0] * co2nums[0];
+	return oxygenGeneratorRating * co2ScrubberRating;
 }
 
 
