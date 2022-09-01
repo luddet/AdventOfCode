@@ -1,22 +1,43 @@
 #pragma once
+#include <istream>
 #include <vector>
 #include <string>
-#include <istream>
+#include <limits>
+#include <sstream>
 
 #include "dllexport.h"
 
+
 template<typename T>
-auto readItems(std::istream& os)
+auto readItems(auto& is, const char delimiter = ' ')
 {
 	std::vector<T> result;
-	while (!os.eof())
+	while (!is.eof())
 	{
 		T i;
-		os >> i;
+		is >> i;
+		if (is.bad())
+			break;
+		
+		if (is.fail())
+		{
+			is.clear();
+			is.ignore( (std::numeric_limits<std::streamsize>::max)(), delimiter);
+			continue;
+		}
+
 		result.push_back(i);
 	}
 	return result;
 }
+
+template<typename T>
+auto readItems(std::string& str, const char delimiter = ' ')
+{
+	std::istringstream ss(str);
+	return readItems<T>(ss, delimiter);
+}
+
 
 DLLEXPORT std::vector<int> readInts(std::istream& os);
 DLLEXPORT std::vector<std::string> readLines(const std::string& filePath);
