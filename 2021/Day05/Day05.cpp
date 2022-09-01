@@ -44,16 +44,7 @@ public:
 
 	void plot(const Line& line)
 	{
-		if (line.start.x == line.end.x) // Vertical
-		{
-			auto [start, end] = line.start.y <= line.end.y ? std::make_pair(line.start.y, line.end.y) : std::make_pair(line.end.y, line.start.y);
-			size_t stride = m_width;
-			size_t offset = m_width * start + line.start.x;
-			size_t endOffset = offset + (end - start) * stride;
-			for (auto index = offset; index <= endOffset; index += stride)
-				++m_grid[index];
-		}
-		else if (line.start.y == line.end.y) // Horizontal
+		if (line.start.y == line.end.y) // Horizontal
 		{
 			auto [start, end] = line.start.x <= line.end.x ? std::make_pair(line.start.x, line.end.x) : std::make_pair(line.end.x, line.start.x);
 			size_t stride = 1;
@@ -64,7 +55,13 @@ public:
 		}
 		else
 		{
-			throw 1;
+			auto [start, end] = line.start.y <= line.end.y ? std::make_pair(line.start, line.end) : std::make_pair(line.end, line.start);
+			auto xDir = (end.x - start.x) > 0 ? 1 : (end.x == start.x) ? 0 : - 1;
+			size_t stride = m_width + xDir;
+			size_t offset = m_width * start.y + start.x;
+			size_t endOffset = offset + (end.y - start.y) * stride;
+			for (auto index = offset; index <= endOffset; index += stride)
+				++m_grid[index];
 		}
 	}
 	
@@ -103,6 +100,12 @@ int main()
 		return line.start.x == line.end.x || line.start.y == line.end.y;
 	});
 
+	std::vector<Line> diagLines;
+	std::copy_if(begin(lines), end(lines), std::back_inserter(diagLines), [](auto& line)
+	{
+		return line.start.x != line.end.x && line.start.y != line.end.y;
+	});
+
 	const auto [xMax, yMax] = std::accumulate(begin(lines), end(lines), Point{0,0}, [](auto max, auto& line) -> Point
 	{
 		return { std::max({max.x, line.start.x, line.end.x}), std::max({max.y, line.start.y, line.end.y}) };
@@ -112,9 +115,15 @@ int main()
 
 	for (auto& line : horzAndVertLines)
 		grid.plot(line);
-
 	auto part1 = grid.count_if([](auto v) {return v > 1; });
+	
+	for (auto& line : diagLines)
+		grid.plot(line);
+	auto part2 = grid.count_if([](auto v) {return v > 1; });
+
+	//std::cout << grid << '\n';
+
 	std::cout << "Day05 Part1: " << part1 << '\n';
-	//std::cout << grid;
+	std::cout << "Day05 Part2: " << part2 << '\n';
 
 }
