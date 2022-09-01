@@ -13,7 +13,7 @@
 
 #include "..\Utilities\utilities.h"
 
-using std::string_literals::operator""s;
+using namespace std::string_literals;
 namespace ranges = std::ranges;
 
 template<int SIZE = 5>
@@ -71,6 +71,11 @@ public:
 		return sum;
 	}
 
+	bool operator==(const Board& other) const
+	{
+		return m_marks == other.m_marks && m_numbers == other.m_numbers;
+	}
+
 	friend std::istream& operator>>(std::istream& is, Board& board)
 	{
 		for (size_t i = 0; i < board.m_numbers.size(); ++i)
@@ -86,21 +91,6 @@ public:
 	}
 };
 
-
-std::optional<int> part1(const ranges::input_range auto& numbers, ranges::random_access_range auto& boards)
-{
-	for (auto n : numbers)
-	{
-		for (size_t boardIndex = 0; boardIndex < boards.size(); ++boardIndex)
-		{
-			if (boards[boardIndex].mark(n) && boards[boardIndex].isComplete())
-				return n * boards[boardIndex].getUnmarkedSum();
-		}
-	}
-
-	return std::optional<int>{};
-}
-
 int main()
 {
 	using std::getline;
@@ -111,8 +101,64 @@ int main()
 	auto numbers = readItems<int>(line, ',');
 	auto boards = readItems<Board<5>>(ifs);
 	
-	
-	auto part1Answer = part1(numbers, boards);
-	std::cout << "Day04 Part1: " << (part1Answer.has_value() ? std::to_string(part1Answer.value()) : "Failed"s) << '\n';
+	int part1Answer{}, part2Answer{};
 
+	bool foundWinner{ false };
+	size_t numIdx{ 0 };
+	size_t boardIndex{ boards.size()-1};
+
+	for (; numIdx < numbers.size(); ++numIdx)
+	{
+		auto n = numbers[numIdx];
+		while (!foundWinner)
+		{
+			auto& board = boards[boardIndex];
+			if (board.mark(n) && board.isComplete())
+			{
+				foundWinner = true;
+				part1Answer = n * board.getUnmarkedSum();
+				std::erase(boards, board);
+			}
+
+			if (boardIndex == 0)
+				break;
+			else
+				--boardIndex;
+		}
+
+		if (foundWinner)
+			break;
+		else
+			boardIndex = boards.size() - 1;
+	}
+
+	bool foundLooser{ false };
+	for (; !foundLooser && numIdx < numbers.size(); ++numIdx)
+	{
+		auto n = numbers[numIdx];
+		while (!foundLooser)
+		{
+			auto& board = boards[boardIndex];
+			if (board.mark(n) && board.isComplete())
+			{
+				if (boards.size() > 1)
+					std::erase(boards, board);
+				else
+				{
+					part2Answer = n * board.getUnmarkedSum();
+					foundLooser = true;
+				}
+			}
+
+			if (boardIndex == 0)
+				break;
+			else
+				--boardIndex;
+
+		}
+		boardIndex = boards.size() - 1;
+	}
+	
+	std::cout << "Day04 Part1: " << part1Answer << '\n';
+	std::cout << "Day04 Part2: " << part2Answer << '\n';
 }
