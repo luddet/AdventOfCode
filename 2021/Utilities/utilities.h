@@ -9,7 +9,7 @@
 
 
 template<typename T>
-auto readItems(auto& is, const char delimiter = ' ')
+auto readItems(std::istream& is, const char delimiter = ' ')
 {
 	std::vector<T> result;
 	while (!is.eof())
