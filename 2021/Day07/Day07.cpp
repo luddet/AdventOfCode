@@ -37,6 +37,6 @@ int main()
 		return cost; 
 	});
 
-	std::cout << "Day07 Part 1: pos: " << linearCostPos << ", moves: " << linearCost << '\n';
-	std::cout << "Day07 Part 2: pos: " << varCostPos << ", moves: " << varCost << '\n';
+	std::cout << "Day07 Part 1: pos: " << linearCostPos << ", cost: " << linearCost << '\n';
+	std::cout << "Day07 Part 2: pos: " << varCostPos << ", cost: " << varCost << '\n';
 }
