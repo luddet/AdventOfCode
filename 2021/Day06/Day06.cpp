@@ -13,7 +13,7 @@ namespace ranges = std::ranges;
 
 std::ostream& printTimers(std::ostream& os, const ranges::sized_range auto& timers)
 {
-	auto numberOfFish = std::accumulate(begin(timers), end(timers), 0);
+	auto numberOfFish = std::accumulate(begin(timers), end(timers), 0ull);
 	os << "Total: " << numberOfFish << ": ";
 	for (size_t i = 0; i < timers.size(); ++i)
 		os << timers[i] << ", ";
@@ -32,12 +32,15 @@ int main()
 	constexpr size_t cycleLength = 7;
 	constexpr size_t maxDays = 9;
 
-	std::array<int, maxDays> timers{0};
+	std::array<unsigned long long, maxDays> timers{0};
 
 	for (auto n : input)
 		++timers[n];
 
-	const size_t daysToSimulate = 80;
+	const size_t daysToSimulate = 256;
+	unsigned long long numberOfFishAfter80{};
+	unsigned long long numberOfFishAfter256{};
+
 	for (auto n = 0; n < daysToSimulate; ++n)
 	{
 		auto spawns = timers[0];
@@ -45,10 +48,13 @@ int main()
 			timers[i] = timers[i + 1];
 		timers[cycleLength - 1] += spawns;
 		timers[timers.size() - 1] = spawns;
-		printTimers(std::cout, timers) << '\n';
-	}
+		//printTimers(std::cout, timers) << '\n';
+		if (n == 79)
+			numberOfFishAfter80 = std::accumulate(begin(timers), end(timers), 0ull);
 
-	auto numberOfFish = std::accumulate(begin(timers), end(timers), 0);
-	std::cout << "Day06 Part 1: " << numberOfFish << '\n';
-	std::cout << "Day06 Part 2: " << '\n';
+	}
+	numberOfFishAfter256 = std::accumulate(begin(timers), end(timers), 0ull);
+
+	std::cout << "Day06 Part 1: " << numberOfFishAfter80 << '\n';
+	std::cout << "Day06 Part 2: " << numberOfFishAfter256 << '\n';
 }
