@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <concepts>
 #include <fstream>
 #include <iostream>
 #include <numeric>
@@ -8,6 +9,19 @@
 #include "../Utilities/utilities.h"
 namespace ranges = std::ranges;
 
+auto calculate(const auto& positions, auto costFunction)
+{
+	std::vector<std::pair<int64_t, int64_t>> positionMoves;
+	auto [min, max] = ranges::minmax_element(positions);
+	for (int64_t i = *min; i <= *max; ++i)
+	{
+		auto numMoves = std::accumulate(begin(positions), end(positions), 0ll, [i, &costFunction](int64_t acc, int64_t pos) { return acc + costFunction(std::abs(i - pos)); });
+		positionMoves.push_back({ i, numMoves });
+		std::push_heap(begin(positionMoves), end(positionMoves), [](auto& a, auto& b) { return a.second > b.second; });
+	}
+
+	return positionMoves.front();
+}
 
 int main()
 {
@@ -15,17 +29,14 @@ int main()
 	std::ifstream ifs("input.txt");
 	auto positions = readItems<int64_t>(ifs, ',');
 
-	std::vector<std::pair<int64_t, int64_t>> positionMoves;
-	auto [min, max] = ranges::minmax_element(positions);
-	for (int64_t i = *min; i <= *max; ++i)
-	{
-		auto numMoves = std::accumulate(begin(positions), end(positions), 0ll, [i](int64_t moves, int64_t pos) { return moves + std::abs(i - pos); });
-		positionMoves.push_back({ i, numMoves });
-		std::push_heap(begin(positionMoves), end(positionMoves), [](auto& a, auto& b) { return a.second > b.second; });
-	}
+	auto [linearCostPos, linearCost] = calculate(positions, [](auto steps) { return steps; });
+	auto [varCostPos, varCost] = calculate(positions, [](auto steps) {
+		int64_t cost{ 0 };
+		for (int64_t i = 0; i <= steps; ++i)
+			cost += i;
+		return cost; 
+	});
 
-	auto [pos, moves] = positionMoves.front();
-
-	std::cout << "Day07 Part 1: pos: " << pos << ", moves: " << moves << '\n';
-	std::cout << "Day07 Part 2: " << '\n';
+	std::cout << "Day07 Part 1: pos: " << linearCostPos << ", moves: " << linearCost << '\n';
+	std::cout << "Day07 Part 2: pos: " << varCostPos << ", moves: " << varCost << '\n';
 }
