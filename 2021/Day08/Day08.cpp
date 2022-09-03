@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <bitset>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <numeric>
@@ -16,10 +17,10 @@
 using namespace std::string_literals;
 namespace ranges = std::ranges;
 
-constexpr size_t NUM_BITS = 7;
+constexpr const size_t NUM_BITS = 7;
 using bits_t = std::bitset<NUM_BITS>;
 
-auto readTokens(std::istream& is, auto& container, auto num)
+void readTokens(std::istream& is, auto& container, auto num)
 {
 	std::vector<std::string> input;
 	for (size_t i = 0; i < num; ++i)
@@ -33,7 +34,8 @@ auto readTokens(std::istream& is, auto& container, auto num)
 	container.push_back(std::move(input));
 };
 
-[[nodiscard]] bits_t makeBitset(const std::string_view& pattern)
+[[nodiscard]]
+auto makeBitset(const std::string_view& pattern) -> bits_t
 {
 	return std::accumulate(begin(pattern), end(pattern), bits_t{}, [](auto bits, char ch)
 	{
@@ -42,11 +44,12 @@ auto readTokens(std::istream& is, auto& container, auto num)
 	});
 }
 
-template<class Container>
+template<class Container, typename T = Container::value_type>
+[[nodiscard]]
 auto pop_if(Container& container, auto pred) -> Container::value_type
 {
 	auto it = ranges::find_if(container, pred);
-	Container::value_type result = *it;
+	T result = *it;
 	container.erase(it);
 	return result;
 
@@ -54,7 +57,7 @@ auto pop_if(Container& container, auto pred) -> Container::value_type
 
 int main()
 {
-	std::ifstream ifs("test_input.txt");
+	std::ifstream ifs("input.txt");
 	
 	std::vector<std::vector<std::string>> inputs;
 	std::vector<std::vector<std::string>> outputs;
@@ -75,23 +78,45 @@ int main()
 		});
 	});
 
+	int outSum{ 0 };
 	for (size_t i = 0; i < inputs.size(); ++i)
 	{
 		std::vector<bits_t> inputBits, outputBits;
-		
 		ranges::transform(inputs[i], std::back_inserter(inputBits), makeBitset);
 		ranges::transform(outputs[i], std::back_inserter(outputBits), makeBitset);
 
 		std::array<bits_t, 10> bitpatterns{};
 
+		// Calculate which patterns corresponds to which number
 		bitpatterns[1] = pop_if(inputBits, [](auto& bits) { return bits.count() == 2; });
 		bitpatterns[7] = pop_if(inputBits, [](auto& bits) { return bits.count() == 3; });
 		bitpatterns[4] = pop_if(inputBits, [](auto& bits) { return bits.count() == 4; });
 		bitpatterns[8] = pop_if(inputBits, [](auto& bits) { return bits.count() == 7; });
 
+		bitpatterns[6] = pop_if(inputBits, [&](auto& bits) { return bits.count() == 6 && (bitpatterns[1] & ~bits).any(); });
+		bitpatterns[0] = pop_if(inputBits, [&](auto& bits) { return bits.count() == 6 && (bitpatterns[4] & ~bits).any(); });
+		bitpatterns[9] = pop_if(inputBits, [&](auto& bits) { return bits.count() == 6; });
+		
+		bitpatterns[5] = pop_if(inputBits, [&](auto& bits) { return bits.count() == 5 && (bits | bitpatterns[1]) == bitpatterns[9]; });
+		bitpatterns[3] = pop_if(inputBits, [&](auto& bits) { return bits.count() == 5 && (bits & bitpatterns[1]) == bitpatterns[1]; });
+		bitpatterns[2] = inputBits.front();
+		assert(inputBits.size() == 1);
+
+		// Match output patterns to the actual number
+		int outNumber = std::accumulate(outputBits.begin(), outputBits.end(), 0, [multiplier = 1000, &bitpatterns](auto number, auto bits) mutable 
+		{
+			int digit = 0;
+			[[maybe_unused]] // don't really care about the result, all we want is to increment digit until the pattern is found
+			auto _ = std::any_of(bitpatterns.begin(), bitpatterns.end(), [&](auto pattern) { return bits == pattern ? true : (++digit, false); });
+
+			number += digit * multiplier;
+			multiplier /= 10;
+			return number;
+		});
+
+		outSum += outNumber;
 	}
 
-
 	std::cout << "Day08 Part 1: " << count << '\n';
-	std::cout << "Day08 Part 2: " << '\n';
+	std::cout << "Day08 Part 2: " << outSum << '\n';
 }
