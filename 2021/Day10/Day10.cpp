@@ -1,12 +1,11 @@
 #include <algorithm>
-#include <array>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <stack>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
 
 
 int main()
@@ -14,12 +13,11 @@ int main()
 	std::ifstream ifs("input.txt");
 
 	const std::unordered_map<char,char> braces { {'(', ')'}, {'{', '}'}, {'[', ']'}, {'<', '>'} };
-	const std::unordered_map<char, int> scores{ {')', 3}, {']', 57}, {'}', 1197}, {'>', 25137} };
+	const std::unordered_map<char, int> invalidScoresLookup{ {')', 3}, {']', 57}, {'}', 1197}, {'>', 25137} };
+	const std::unordered_map<char, int> completionScoreLookup{ {'(', 1}, {'[', 2}, {'{', 3}, {'<', 4} };
 
-	//[[maybe_unused]]
-	//std::vector<std::string> invalidLines;
-	int score{ 0 };
-
+	int invalidScore{ 0 };
+	std::vector<size_t> completionScores;
 	{
 		std::string line;
 		while (std::getline(ifs, line))
@@ -35,15 +33,30 @@ int main()
 					chunks.pop();
 				else // invalid chunk
 				{
-					//invalidLines.push_back(line);
-					score += scores.at(c);
+					invalidScore += invalidScoresLookup.at(c);
+					chunks = std::stack<char>();
 					break;
 				}
 			}
+			
+			if (chunks.empty())
+				continue;
+
+			size_t score{ 0 };
+			while (!chunks.empty())
+			{
+				score *= 5;
+				score += completionScoreLookup.at(chunks.top());
+				chunks.pop();
+			}
+			completionScores.push_back(score);
 		}
 	}
 
+	auto median = completionScores.begin() + completionScores.size() / 2;
+	std::ranges::nth_element(completionScores, median);
 
-	std::cout << "Day10 Part 1: " << score << '\n';
-	std::cout << "Day10 Part 2: " << '\n';
+
+	std::cout << "Day10 Part 1: " << invalidScore << '\n';
+	std::cout << "Day10 Part 2: " << *median << '\n';
 }
