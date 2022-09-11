@@ -1,8 +1,6 @@
 #pragma once
 #include <array>
 #include <exception>
-#include <istream>
-#include <sstream>
 
 template<typename T, size_t W, size_t H>
 class Grid
@@ -30,27 +28,41 @@ private:
 	std::array<T, Size> m_grid{};
 };
 
+template<typename T>
+consteval std::pair<std::string_view, T> extract(const std::string_view str)
+{
+	return { {}, T{} };
+}
 
-template<size_t Width, size_t Height>
-consteval auto readGrid(const std::string_view str) -> Grid<char, Width, Height>
+template<>
+consteval std::pair<std::string_view, char> extract(const std::string_view str)
+{
+	auto first = str.begin();
+	while (*first == '\n')
+		++first;
+	if (first == str.end())
+		throw std::invalid_argument("Unable to extract char before reaching end of str.");
+
+	return { {first+1, str.end()}, *first};
+}
+
+template<typename T, size_t Width, size_t Height>
+consteval Grid<T, Width, Height> readGrid(const std::string_view str)
 {
 	constexpr size_t size = Width * Height;
-	std::array<char, size> data{};
+	std::array<T, size> data{};
 	size_t i{ 0 };
-	for (auto c : str)
-	{
-		if (c == '\n')
-		{
-			if (i % Width != 0)
-				throw std::invalid_argument("Wrong number of characters.");
-			continue;
-		}
 
-		data[i++] = c;
+	auto remainingStr{ str };
+	while (!remainingStr.empty())
+	{
+		constexpr auto result = extract<T>(remainingStr);
+		remainingStr = result.first;
+		data[i++] = std::move(result.second);
 	}
 	if (i != size)
 		throw std::invalid_argument("Wrong number of characters.");
 
-	return Grid<char, Width, Height>{std::move(data)};
+	return Grid<T, Width, Height>{std::move(data)};
 }
 
