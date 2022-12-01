@@ -1,39 +1,28 @@
 #include <algorithm>
-#include <array>
-#include <fstream>
 #include <iostream>
 #include <numeric>
 #include <ranges>
 #include <string>
+#include <vector>
 
-using namespace std;
+#include "../../2021/Utilities/utilities.h"
 
-istream& sumGroups(istream& s, int& out)
-{
-	out = 0;
-	string line;
-	while (getline(s, line) && line.size() != 0)
-		out += atoi(line.c_str());
-	return s;
-}
+namespace views = std::views;
+namespace ranges = std::ranges;
 
-template<class Container>
-void replace_min(Container& c, typename Container::value_type v)
-{
-	auto minIt = min_element(begin(c), end(c));
-	*minIt = max(v, *minIt);
-}
+auto accumulate(auto r, auto init) -> decltype(init) { return std::accumulate(std::begin(r), std::end(r), init); }
+bool empty_lines(const std::string& s1, const std::string&) { return s1.size() != 0; }
+bool non_empty(const std::string& str) { return str.size() > 0; }
+
+int str_to_i(const std::string& str) { return atoi(str.c_str()); }
+constexpr static auto sum_integer_strings = [](const auto chunk_view) { return accumulate(chunk_view | views::filter(non_empty) | views::transform(str_to_i), 0); };
 
 int main()
 {
-	ifstream file{ "input.txt" };
-	
-	array<int,3> topCals {};
-	int calories {};
+	std::vector<std::string> input{ readLines("input.txt")};
+	std::vector<int> summed_calories = input | views::chunk_by(empty_lines) | views::transform(sum_integer_strings) | ranges::to<std::vector>();
+	ranges::sort(summed_calories, ranges::greater());
 
-	while (sumGroups(file, calories))
-		replace_min(topCals, calories);
-
-	cout << "Day01 Part 1: " << ranges::max(topCals) << '\n';
-	cout << "Day01 Part 2: " << accumulate(begin(topCals), end(topCals), 0) << '\n';
+	std::cout << "Day01 Part 1: " << summed_calories.front() << '\n';
+	std::cout << "Day01 Part 2: " << accumulate(summed_calories | views::take(3), 0) << '\n';
 }
