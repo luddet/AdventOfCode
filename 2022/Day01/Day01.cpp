@@ -1,40 +1,38 @@
+#include <array>
 #include <fstream>
 #include <iostream>
-#include <vector>
-#include <limits>
 #include <algorithm>
-#include <array>
 #include <numeric>
+#include <string>
 
+using namespace std;
 
-#include "../../2021/Utilities/utilities.h"
+template<class T, class Container, class Comp>
+void heap_insert(T value, Container& c, Comp comparer)
+{
+	*(end(c) - 1) = value;
+	push_heap(begin(c), end(c), comparer);
+	pop_heap(begin(c), end(c), comparer);
+}
 
 int main()
 {
-	auto lines = readLines("input.txt");
+	array<int,4> topCals {};
+	int currentCalories {};
+	ifstream file{ "input.txt" };
+	string line;
 
-	std::vector<int> calories;
-	int currentCalories{ 0 };
-	for (auto& line : lines)
+	while (getline(file, line))
 	{
 		if (line.size() == 0)
 		{
-			calories.push_back(currentCalories);
-			std::push_heap(begin(calories), end(calories));
+			heap_insert(currentCalories, topCals, greater<int>());
 			currentCalories = 0;
 		}
 		else
-			currentCalories += std::atoi(line.c_str());
+			currentCalories += atoi(line.c_str());
 	}
 
-	std::array<int, 3> topCals{};
-	for (int i = 0; i < topCals.size(); ++i)
-	{
-		topCals[i] = calories.front();
-		std::pop_heap(begin(calories), end(calories));
-		calories.pop_back();
-	}
-
-	std::cout << "Day01 Part 1: " << topCals.front() << '\n';
-	std::cout << "Day01 Part 2: " << std::accumulate(begin(topCals), end(topCals), 0) << '\n';
+	cout << "Day01 Part 1: " << *max_element(begin(topCals), begin(topCals)+3) << '\n';
+	cout << "Day01 Part 2: " << accumulate(begin(topCals), begin(topCals)+3, 0) << '\n';
 }
