@@ -8,24 +8,31 @@
 
 using namespace std;
 
+istream& sumGroups(istream& s, int& out)
+{
+	out = 0;
+	string line;
+	while (getline(s, line) && line.size() != 0)
+		out += atoi(line.c_str());
+	return s;
+}
+
+template<class Container>
+void replace_min(Container& c, typename Container::value_type v)
+{
+	auto minIt = min_element(begin(c), end(c));
+	*minIt = max(v, *minIt);
+}
+
 int main()
 {
-	array<int,3> topCals {};
-	int currentCalories {};
 	ifstream file{ "input.txt" };
-	string line;
+	
+	array<int,3> topCals {};
+	int calories {};
 
-	while (getline(file, line))
-	{
-		if (line.size() == 0)
-		{
-			auto minIt = min_element(begin(topCals), end(topCals));
-			*minIt = max(currentCalories, *minIt);
-			currentCalories = 0;
-		}
-		else
-			currentCalories += atoi(line.c_str());
-	}
+	while (sumGroups(file, calories))
+		replace_min(topCals, calories);
 
 	cout << "Day01 Part 1: " << ranges::max(topCals) << '\n';
 	cout << "Day01 Part 2: " << accumulate(begin(topCals), end(topCals), 0) << '\n';
