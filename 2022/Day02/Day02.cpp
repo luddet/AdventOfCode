@@ -1,124 +1,74 @@
+#include <exception>
 #include <fstream>
 #include <iostream>
-#include <array>
-#include <vector>
-#include <utility>
 #include <unordered_map>
-#include <tuple>
-#include <exception>
-#include <sstream>
-#include <string_view>
-#include <string>
 
-using namespace std::string_literals;
-
-enum class Hand: uint8_t
-{
-	Rock = 1,
-	Paper,
-	Scissors
-};
-
-enum class Outcome : uint8_t
-{
-	Lose = 1,
-	Draw,
-	Win
-};
+enum class Hand: uint8_t { Rock, Paper,	Scissors };
+enum class Outcome : uint8_t { Lose, Draw, Win };
 
 std::istream& operator>>(std::istream& s, Hand& out)
 {
+	const static std::unordered_map<char, Hand> map({ {'A', Hand::Rock}, {'X', Hand::Rock}, {'B', Hand::Paper}, {'Y', Hand::Paper},{'C', Hand::Scissors},{'Z', Hand::Scissors} });
 	unsigned char c;
-	s >> std::skipws;
+
 	s >> c;
 	if (!s.good())
 		return s;
 
-	switch (c)
-	{
-		case 'A':
-		case 'X':
-			out = Hand::Rock;
-			break;
-		case 'B':
-		case 'Y':
-			out = Hand::Paper;
-			break;
-		case 'C':
-		case 'Z':
-			out = Hand::Scissors;
-			break;
-		default:
-			throw std::exception("Unhandled case.");
-	}
+	out = map.at(c);
 	return s;
 }
 
-auto score(Hand p1, Hand p2) -> std::tuple<int, int>
+int score(Hand p1, Hand p2)
 {
-	std::tuple<int, int> r{};
-	switch ((int)p1 - (int)p2)
-	{
-		// draw
-		case 0:
-			r = { 3 + (int)p1, 3 + (int)p2 };
-			break;
-		// p1 win
-		case 1:
-		case -2:
-			r = { 6 + (int)p1, 0 + (int)p2 };
-			break;
-		// p2 win
-		case -1:
-		case 2:
-			r = { 0 + (int)p1, 6 + (int)p2 };
-			break;
-		default:
-			throw std::exception("Unhandled scoring case.");
-	}
-	return r;
+	auto diff = (int)p1 - (int)p2;
+	if (diff == 0) // draw
+		return 3 + (int)p2 + 1;
+	else if (diff == 1 || diff == -2) // p1 win
+		return (int)p2 + 1;
+	else if (diff == -1 || diff == 2) // p2 win
+		return 6 + (int)p2 + 1;
+	else
+		throw std::exception("Unhandled scoring case");
 }
 
-auto hand_from_wanted_outcome(Hand otherHand, Outcome o) -> Hand
+Hand handFromWantedOutcome(Hand otherHand, Outcome o)
 {
-	switch (o)
-	{
-		case Outcome::Draw:
-			return otherHand;
-		case Outcome::Win:
-			return static_cast<Hand>( ((int)otherHand +3) % 3 + 1);
-		case Outcome::Lose:
-			return static_cast<Hand>( ((int)otherHand +4) % 3 + 1);
-		default:
-			throw std::exception("Unhandled outcome.");
-	}
+	if (o == Outcome::Draw)
+		return otherHand;
+	else if (o == Outcome::Win)
+		return static_cast<Hand>(((int)otherHand + 4) % 3);
+	else if (o == Outcome::Lose)
+		return static_cast<Hand>(((int)otherHand + 5) % 3);
+	else
+		throw std::exception("Unhandled outcome case");
 }
 
 int main()
 {
 	std::ifstream ifs("input.txt");
 
-	int part1_score{}, part2_score{};
+	int part1Score{}, part2Score{};
 
-	while (ifs.good())
+	while (true)
 	{
-		Hand elf_hand, part1_hand;
-		Outcome outcome;
+		Hand elfHand, part1Hand;
+		Outcome wantedOutcome;
 
-		ifs >> elf_hand >> part1_hand;
+		ifs >> elfHand >> part1Hand;
 		if (!ifs.good())
 			break;
 
-		outcome = static_cast<Outcome>(part1_hand);
-		auto part2_hand = hand_from_wanted_outcome(elf_hand, outcome);
+		auto s = score(elfHand, part1Hand);
+		part1Score += s;
 
-		auto [_1, s1] = score(elf_hand, part1_hand);
-		part1_score += s1;
+		wantedOutcome = static_cast<Outcome>(part1Hand);
+		auto part2_hand = handFromWantedOutcome(elfHand, wantedOutcome);
 
-		auto [_2, s2] = score(elf_hand, part2_hand);
-		part2_score += s2;
+		s = score(elfHand, part2_hand);
+		part2Score += s;
 	}
 
-	std::cout << "Day02 Part 1: " << part1_score << '\n';
-	std::cout << "Day02 Part 2: " << part2_score << '\n';
+	std::cout << "Day02 Part 1: " << part1Score << '\n';
+	std::cout << "Day02 Part 2: " << part2Score << '\n';
 }
