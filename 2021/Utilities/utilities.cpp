@@ -19,9 +19,19 @@ DLLEXPORT std::vector<int> readInts(std::istream& os)
 
 DLLEXPORT std::vector<std::string> readLines(const std::string& filePath)
 {
-	std::ifstream ifs(filePath);
+	return readLines(std::ifstream(filePath));
+}
+
+DLLEXPORT std::vector<std::string> readLines(std::istream& is)
+{
 	std::vector<std::string> result;
-	for (std::string line; std::getline(ifs, line);)
+	for (std::string line; std::getline(is, line);)
 		result.push_back(line);
 	return result;
+
+}
+
+DLLEXPORT std::vector<std::string> readLines(std::istream&& is)
+{
+	return readLines(is);
 }
