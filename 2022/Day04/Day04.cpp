@@ -17,11 +17,11 @@ int main()
 
 	int part1{}, part2{};
 	std::array<int, 4> n{};
-	const std::regex r(R"(\d+)");
+	const std::regex delimiters("[-,]");
 
 	for(const auto& line : lines)
 	{
-		std::transform(std::sregex_token_iterator(begin(line), end(line), r), std::sregex_token_iterator(), begin(n), [](const std::string& match)
+		std::transform(std::sregex_token_iterator(begin(line), end(line), delimiters, -1), std::sregex_token_iterator(), begin(n), [](const std::string& match)
 		{
 			return std::atoi(match.c_str());
 		});
