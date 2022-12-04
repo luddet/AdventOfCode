@@ -1,12 +1,7 @@
-#include <fstream>
 #include <iostream>
-#include <cstring>
 #include <string>
-#include <string_view>
 #include <array>
 #include <algorithm>
-#include <numeric>
-#include <ranges>
 #include <regex>
 
 #include "../../2021/Utilities/utilities.h"
@@ -15,12 +10,12 @@ int main()
 {
 	auto lines{ readLines("input.txt") };
 
-	int part1{}, part2{};
-	std::array<int, 4> n{};
 	const std::regex delimiters("[-,]");
+	int part1{}, part2{};
 
 	for(const auto& line : lines)
 	{
+		std::array<int, 4> n{};
 		std::transform(std::sregex_token_iterator(begin(line), end(line), delimiters, -1), std::sregex_token_iterator(), begin(n), [](const std::string& match)
 		{
 			return std::atoi(match.c_str());
