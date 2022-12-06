@@ -11,22 +11,26 @@
 
 namespace views = std::views;
 
+int findUniqueWindow(const std::ranges::range auto& input, const int windowSize)
+{
+	int index{ 0 };
+	for (const auto& window : input | views::slide(windowSize))
+	{
+		std::set<char> unique;
+		std::unique_copy(window.begin(), window.end(), std::inserter(unique, unique.end()));
+		if (unique.size() == windowSize)
+			break;
+		++index;
+	}
+	return index + windowSize;
+}
+
 int main()
 {
 	auto input = getInput(2022, 6);
-	//input = "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw";
-	int part1{ 0 };
-	constexpr static int windowSize{ 4 };
-	for (const auto& window : input | views::slide(windowSize))
-	{
-		std::set<char> unique{};
-		std::unique_copy(window.begin(), window.end(), std::inserter(unique, unique.end()));
-		if (unique.size() == 4)
-			break;
-		++part1;
-	}
-	part1 += windowSize;
-
+	int part1 = findUniqueWindow(input, 4);
+	int part2 = findUniqueWindow(input, 14);
+	
 	std::cout << "Day06 Part 1: " << part1 << '\n';
-	//std::cout << "Day06 Part 2: " << '\n';
+	std::cout << "Day06 Part 2: " << part2 << '\n';
 }
