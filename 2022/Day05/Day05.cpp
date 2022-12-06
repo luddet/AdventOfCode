@@ -1,55 +1,40 @@
 #include <fstream>
 #include <iostream>
 #include <array>
-#include <stack>
 #include <string>
-#include <regex>
 #include <algorithm>
 #include <tuple>
+#include <vector>
+#include <ranges>
 
-auto parseStartingState(std::istream& s)
+auto parseStartingState2(std::istream& s)
 {
-	std::regex re(R"((?:\[(\w)\]|\s\s\s)\s?)");
-	std::stack<std::string> lines;
+	using namespace std::views;
+	std::vector<std::string> lines;
 	for (std::string line; std::getline(s, line) && line.length() > 0; )
-		lines.push(line);
+		lines.push_back(line);
 
-	lines.pop(); // discard last with only indices
-
-	std::array<std::stack<unsigned char>, 9> state{};
-	while (!lines.empty())
-	{
-		auto& line = lines.top();
-		std::sregex_iterator it(begin(line), end(line), re);
-		for (auto& stack : state)
-		{
-			if ((*it)[1].matched)
-				stack.push((*it)[1].str().at(0));
-
-			if (++it == std::sregex_iterator())
-				break;
-		}
-		lines.pop();
-	}
-
+	std::array<std::vector<unsigned char>, 9> state{};
+	for(auto& line : lines | reverse | drop(1))
+		for (size_t i = 0; i < state.size(); ++i)
+			if (char c{ line[i * 4 + 1] }; c != ' ')
+				state[i].push_back(c);
 	return state;
 }
-
 
 auto parseOperations(std::istream& s)
 {
 	using std::get;
 	std::string _;
-	std::tuple<int, int, int> in;
-	std::vector<decltype(in)> result;
+	int n, f, t;
+	std::vector<std::tuple<int, int, int>> result;
 	while (true)
 	{
-		s >> _ >> get<0>(in) >> _ >> get<1>(in) >> _ >> get<2>(in);
+		s >> _ >> n >> _ >> f >> _ >> t;
 		if (s.bad() || s.fail())
 			break;
-		result.push_back(in);
+		result.emplace_back(std::make_tuple(n, f-1, t-1));
 	}
-	
 	return result;
 }
 
@@ -57,37 +42,19 @@ int main()
 {
 	using std::get;
 	std::ifstream ifs("input.txt");
-	auto stacks1 = parseStartingState(ifs);
-	auto stacks2{ stacks1 };
+	auto stacks1{ parseStartingState2(ifs) }, stacks2{ stacks1 };
 
-	auto ops = parseOperations(ifs);
-
-	for (const auto& op : ops)
+	for (const auto [n, f, t] : parseOperations(ifs))
 	{
-		const int num = get<0>(op);
-		const int from{ get<1>(op) - 1 }, to{ get<2>(op) - 1 };
+		std::copy_n(rbegin(stacks1[f]), n, std::back_inserter(stacks1[t]));
+		stacks1[f].resize(stacks1[f].size() - n);
 
-		std::stack<unsigned char> temp;
-		for (size_t i{ 0 }; i < num; ++i)
-		{
-			// part 1
-			stacks1[to].push(stacks1[from].top());
-			stacks1[from].pop();
-
-			// part 2 take items
-			temp.push(stacks2[from].top());
-			stacks2[from].pop();
-		}
-
-		while (!temp.empty())
-		{
-			stacks2[to].push(temp.top());
-			temp.pop();
-		}
+		std::copy_n(end(stacks2[f]) - n, n, std::back_inserter(stacks2[t]));
+		stacks2[f].resize(stacks2[f].size() - n);
 	}
 
 	std::string part1, part2;
-	auto top = [](auto& stack) { return stack.top();};
+	auto top = [](auto& stack) { return stack.back();};
 	std::transform(cbegin(stacks1), cend(stacks1), std::back_inserter(part1), top);
 	std::transform(cbegin(stacks2), cend(stacks2), std::back_inserter(part2), top);
 
