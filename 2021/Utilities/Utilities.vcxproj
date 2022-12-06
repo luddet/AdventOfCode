@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.props" Condition="Exists('..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -125,7 +126,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,6 +144,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,6 +164,18 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="utilities.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.targets" Condition="Exists('..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.props'))" />
+    <Error Condition="!Exists('..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\2022\packages\libcpr.1.9.3\build\native\libcpr.targets'))" />
+  </Target>
 </Project>

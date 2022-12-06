@@ -6,9 +6,38 @@
 #include <algorithm>
 #include <ranges>
 #include <vector>
+#include <functional>
 
 #include "dllexport.h"
 
+class env_error : public std::runtime_error
+{
+	using std::runtime_error::runtime_error;
+};
+
+struct finally_t : public std::function<void()>
+{
+	finally_t(auto&& c) :std::function<void()>(std::forward<decltype(c)>(c))
+	{
+	}
+	~finally_t() noexcept { (*this)(); }
+
+	finally_t(const finally_t&) = delete;
+	finally_t& operator=(const finally_t&) = delete;
+};
+
+finally_t finally(auto&& f)
+{
+	return finally_t(std::forward<decltype(f)>(f));
+}
+
+#define CONCAT_INNER(str1, str2) str1 ## str2
+#define CONCAT(str1, str2) CONCAT_INNER(str1, str2)
+#define FINALLY(code) auto CONCAT(__finally_, __COUNTER__) = finally([&]{code;})
+
+DLLEXPORT std::string getInput(unsigned int year, unsigned int day, const std::string& cacheFile = "input.txt");
+DLLEXPORT std::string getEnvVar(const char* var);
+DLLEXPORT std::string getSessionCookie(const std::string& envVar = "AOC_SESSION_COOKIE_FILE");
 
 template<typename T>
 auto readItems(std::istream& is, const char delimiter = ' ')
@@ -39,6 +68,9 @@ auto readItems(std::string& str, const char delimiter = ' ')
 	std::istringstream ss(str);
 	return readItems<T>(ss, delimiter);
 }
+
+DLLEXPORT std::string readAllText(std::istream& is);
+DLLEXPORT std::string readAllText(const std::string& filename);
 
 DLLEXPORT std::vector<int> readInts(std::istream& os);
 
