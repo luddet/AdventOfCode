@@ -36,6 +36,7 @@ finally_t finally(auto&& f)
 #define FINALLY(code) auto CONCAT(__finally_, __COUNTER__) = finally([&]{code;})
 
 DLLEXPORT std::string getInput(unsigned int year, unsigned int day, const std::string& cacheFile = "input.txt");
+
 DLLEXPORT std::string getEnvVar(const char* var);
 DLLEXPORT std::string getSessionCookie(const std::string& envVar = "AOC_SESSION_COOKIE_FILE");
 
@@ -68,6 +69,9 @@ auto readItems(std::string& str, const char delimiter = ' ')
 	std::istringstream ss(str);
 	return readItems<T>(ss, delimiter);
 }
+
+DLLEXPORT std::vector<std::string> split(const std::string& str, const std::string& delims = "\n");
+
 
 DLLEXPORT std::string readAllText(std::istream& is);
 DLLEXPORT std::string readAllText(const std::string& filename);

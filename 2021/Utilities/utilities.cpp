@@ -1,13 +1,16 @@
-#include <fstream>
-#include <string>
-#include <stdlib.h>
+#include <algorithm>
 #include <cassert>
 #include <exception>
 #include <filesystem>
-#include <stdexcept>
+#include <fstream>
 #include <iostream>
-#include "utilities.h"
+#include <sstream>
+#include <stdexcept>
+#include <stdlib.h>
+#include <string>
 #include <cpr/cpr.h>
+
+#include "utilities.h"
 
 
 std::string downloadInput(unsigned int year, unsigned int day)
@@ -39,6 +42,7 @@ DLLEXPORT std::string getInput(unsigned int year, unsigned int day, const std::s
 		input = downloadInput(year, day);
 		std::ofstream ofs(cacheFile);
 		ofs << input;
+		return input;
 	}
 	else
 	{
@@ -92,6 +96,22 @@ DLLEXPORT std::string getSessionCookie(const std::string& envVar)
 		msg << "Cookie file was empty: " << cookiePath;
 		throw std::runtime_error(msg.str());
 	}
+}
+
+std::vector<std::string> split(const std::string& str, const std::string& delims)
+{
+	std::vector<std::string> result{};
+	size_t first{ 0 }, end;
+	do
+	{
+		end = min(str.find_first_of(delims, first), str.length());
+		if (end - first > 1)
+			result.emplace_back(str.substr(first, end - first));
+		
+		first = end + 1;
+	} while (first < str.length());
+
+	return result;
 }
 
 DLLEXPORT std::string readAllText(std::istream& is)
