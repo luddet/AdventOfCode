@@ -8,6 +8,7 @@
 #include <ranges>
 #include <regex>
 
+
 #include "../../2021/Utilities/utilities.h"
 
 static const std::string testInput(
@@ -80,14 +81,14 @@ private:
 };
 
 
-template<class Callable>
-void forEachDirectory(const Directory& dir, Callable&& fun)
+template<class Type, class Callable>
+void forEach(const Type& dir, Callable&& fun)
 {
 	std::for_each(cbegin(dir.getChildren()), cend(dir.getChildren()), [&](const auto& child)
 	{
-		if (auto dirPtr = std::dynamic_pointer_cast<Directory>(child); dirPtr != nullptr)
+		if (auto dirPtr = std::dynamic_pointer_cast<Type>(child); dirPtr != nullptr)
 		{
-			forEachDirectory(*dirPtr, fun);
+			forEach(*dirPtr, fun);
 			fun(*dirPtr);
 		}
 	});
@@ -134,15 +135,27 @@ int main()
 		}
 	}
 
+
+	std::vector<size_t> sizes;
 	size_t part1{ 0 };
-	forEachDirectory(*root, [&part1](const Directory& dir)
+	forEach(*root, [&](const auto& dir)
 	{
 		auto size = dir.getSize();
+		sizes.push_back(size);
 		if (size <= 100000)
 			part1 += size;
 	});
 
+	std::sort(sizes.begin(), sizes.end());
+
+	constexpr size_t totalDiskSpace{ 70000000 };
+	constexpr size_t unusedNeeded{ 30000000 };
+	const size_t totalUsed{ root->getSize() };
+	const auto sizeToDelete{ totalUsed - (totalDiskSpace - unusedNeeded)};
+
+	auto part2 = std::ranges::find_if(sizes, [sizeToDelete](const auto s) {return s > sizeToDelete; });
+
 
 	std::cout << "Day07 Part 1: " << part1 << '\n';
-	std::cout << "Day07 Part 2: " << '\n';
+	std::cout << "Day07 Part 2: " << *part2 << '\n';
 }
