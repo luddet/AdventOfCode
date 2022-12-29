@@ -1,3 +1,4 @@
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <tuple>
@@ -63,38 +64,57 @@ int main()
 {
 	auto input = split(getInput(2022, 9));
 
-	Point head{ 0,0 }, tail{ 0,0 };
-	std::unordered_set<Point> tailPositions;
-	tailPositions.insert(tail);
+	std::array<Point, 10> knots(Point{ 0,0 });
+	std::unordered_set<Point> part1Positions;
+	std::unordered_set<Point> part2Positions;
+	
+	Point& head{ knots.front() };
+	Point& part1Knot{ knots[1] };
+	Point& part2Knot{ knots.back()};
+
+	part1Positions.insert(part1Knot);
+	part2Positions.insert(part2Knot);
 
 	for (const auto& move : input)
 	{
 		auto count = std::stoi(move.substr(2));
-		switch (move[0])
+		while (--count >= 0)
 		{
-			case 'R':
-				std::get<X>(head) += count;
-				break;
-			case 'L':
-				std::get<X>(head) -= count;
-				break;
-			case 'U':
-				std::get<Y>(head) -= count;
-				break;
-			case 'D':
-				std::get<Y>(head) += count;
-				break;
-		}
+			switch (move[0])
+			{
+				case 'R':
+					std::get<X>(head)++;
+					break;
+				case 'L':
+					std::get<X>(head)--;
+					break;
+				case 'U':
+					std::get<Y>(head)--;
+					break;
+				case 'D':
+					std::get<Y>(head)++;
+					break;
+			}
 
-		while (!isAdjacent(head, tail))
-		{
-			tail = stepTowards(head, tail);
-			tailPositions.insert(tail);
+			for (size_t i = 1; i < knots.size(); ++i)
+			{
+				auto& target = knots[i - 1];
+				auto& cur = knots[i];
+				while (!isAdjacent(target, cur))
+				{
+					cur = stepTowards(target, cur);
+					if (&cur == &part1Knot)
+						part1Positions.insert(part1Knot);
+					else if (&cur == &part2Knot)
+						part2Positions.insert(part2Knot);
+				}
+			}
 		}
 	}
 
-	auto part1 = tailPositions.size();
+	auto part1 = part1Positions.size();
+	auto part2 = part2Positions.size();
 
 	std::cout << "Day09 Part 1: " << part1 << '\n';
-	std::cout << "Day09 Part 2: " << '\n';
+	std::cout << "Day09 Part 2: " << part2 << '\n';
 }
