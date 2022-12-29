@@ -12,31 +12,6 @@ constexpr size_t Y = 1;
 
 using Point = std::tuple<int, int>;
 
-template<class... Types>
-struct std::hash<std::tuple<Types...>>
-{
-	std::size_t operator()(const std::tuple<Types...>& t) const noexcept
-	{
-		return internalHash(t, std::index_sequence_for<Types...>{});
-	}
-
-private:
-	template<class Tuple, size_t... Idx>
-	std::size_t internalHash(Tuple t, std::index_sequence<Idx...>) const noexcept
-	{
-		return ( (std::hash<std::tuple_element_t<Idx, Tuple>>{}(std::get<Idx>(t)) << Idx) ^ ...);
-	}
-};
-
-
-int sign(auto n)
-{
-	static_assert(std::is_arithmetic_v<decltype(n)>, "Type has to be arithmetic.");
-	if constexpr (std::is_unsigned_v<decltype(n)>)
-		return n > 0 ? 1 : 0;
-	else
-		return n > 0 ? 1 : n < 0 ? -1 : 0;
-}
 
 Point operator-(const Point& lhs, const Point& rhs)
 {

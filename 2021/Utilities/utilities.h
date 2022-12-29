@@ -15,6 +15,36 @@ class env_error : public std::runtime_error
 	using std::runtime_error::runtime_error;
 };
 
+/// <summary>
+/// Generic variadic hasher for std::tuple. Enables hashing for all tuples where all components have std::hash defined.
+/// </summary>
+template<class... Types>
+struct std::hash<std::tuple<Types...>>
+{
+	std::size_t operator()(const std::tuple<Types...>& t) const noexcept
+	{
+		return internalHash(t, std::index_sequence_for<Types...>{});
+	}
+
+private:
+	template<class Tuple, size_t... Idx>
+	std::size_t internalHash(Tuple t, std::index_sequence<Idx...>) const noexcept
+	{
+		return ((std::hash<std::tuple_element_t<Idx, Tuple>>{}(std::get<Idx>(t)) << Idx) ^ ...);
+	}
+};
+
+
+int sign(auto n)
+{
+	static_assert(std::is_arithmetic_v<decltype(n)>, "Type has to be arithmetic.");
+	if constexpr (std::is_unsigned_v<decltype(n)>)
+		return n > 0 ? 1 : 0;
+	else
+		return n > 0 ? 1 : n < 0 ? -1 : 0;
+}
+
+
 struct finally_t : public std::function<void()>
 {
 	finally_t(auto&& c) :std::function<void()>(std::forward<decltype(c)>(c))
