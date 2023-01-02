@@ -3,26 +3,26 @@
 #include <iostream>
 #include <vector>
 
-using IntType = size_t;
+using IntType = unsigned long long;
 using TransformFunc = std::function<IntType(IntType)>;
 using IndexFunc = std::function<size_t(IntType)>;
 using ItemsContainer = std::vector<IntType>;
 
 IntType calculate(std::vector<ItemsContainer> items, const std::vector<IndexFunc>& indexFunctions, const std::vector<TransformFunc>& ops, int rounds, TransformFunc divider)
 {
-	std::vector<size_t> inspections(items.size(), 0);
-
+	std::vector<IntType> inspections(items.size(), 0);
 	for (size_t round = 0; round < rounds; ++round)
 	{
 		for (size_t monkey = 0; monkey < items.size(); ++monkey)
 		{
-			inspections[monkey] += items[monkey].size();
 			for (auto& currentItem : items[monkey])
 			{
 				currentItem = ops[monkey](currentItem);
 				currentItem = divider(currentItem);
 				items[indexFunctions[monkey](currentItem)].push_back(currentItem);
 			}
+
+			inspections[monkey] += items[monkey].size();
 			items[monkey].clear();
 		}
 	}
@@ -68,7 +68,7 @@ int main()
 
 	constexpr const static auto product = 2 * 7 * 11 * 19 * 3 * 5 * 17 * 13;
 
-	auto part1 = calculate(items, indexFunctions, ops, 20, [](auto n) {return n / 3; });
+	auto part1 = calculate(items, indexFunctions, ops, 20, [](auto n) { return n / 3; });
 	auto part2 = calculate(items, indexFunctions, ops, 10000, [](auto n) { return n % product; });
 
 	std::cout << "Day11 Part 1: " << part1 << '\n';
