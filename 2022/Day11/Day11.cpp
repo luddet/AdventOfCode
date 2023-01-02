@@ -69,7 +69,7 @@ int main()
 	constexpr const static auto product = 2 * 7 * 11 * 19 * 3 * 5 * 17 * 13;
 
 	auto part1 = calculate(items, indexFunctions, ops, 20, [](auto n) {return n / 3; });
-	auto part2 = calculate(items, indexFunctions, ops, 10000, [](auto n)	{ return n % product; });
+	auto part2 = calculate(items, indexFunctions, ops, 10000, [](auto n) { return n % product; });
 
 	std::cout << "Day11 Part 1: " << part1 << '\n';
 	std::cout << "Day11 Part 2: " << part2 << '\n';
