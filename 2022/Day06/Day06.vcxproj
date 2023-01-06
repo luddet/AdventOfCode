@@ -144,9 +144,6 @@
     <ClCompile Include="Day06.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\2021\Utilities\Utilities.vcxproj">
-      <Project>{1593f446-de1a-49f4-a134-53d76599276e}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\Utilities\Utilities\Utilities.vcxproj">
       <Project>{1593f446-de1a-49f4-a134-53d76599276e}</Project>
     </ProjectReference>
