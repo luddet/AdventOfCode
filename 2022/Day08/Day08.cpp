@@ -7,7 +7,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
-#include "../../2021/Utilities/utilities.h"
+#include "../../Utilities/Utilities/utilities.h"
 
 const std::string testInput = 
 R"(30373

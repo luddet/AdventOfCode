@@ -7,7 +7,7 @@
 #include <ranges>
 #include <numeric>
 
-#include "../Utilities/utilities.h"
+#include "../../Utilities/Utilities/utilities.h"
 
 using std::ranges::sized_range;
 

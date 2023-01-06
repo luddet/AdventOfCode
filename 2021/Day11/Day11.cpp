@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string_view>
 
-#include "../Utilities/grid.h"
+#include "../../Utilities/Utilities/utilities.h"
 
 using namespace std::string_view_literals;
 
@@ -41,5 +41,5 @@ int main()
 	//std::cout << "Day11 Part 1: " << grid.at(1,2) << '\n';
 	//std::cout << "Day11 Part 2: " << '\n';
 
-	constexpr const auto r = extract<char>("aasag"sv);
+	//constexpr const auto r = extract<char>("aasag"sv);
 }

@@ -6,7 +6,7 @@
 #include <tuple>
 #include <vector>
 
-#include "../Utilities/utilities.h"
+#include "../../Utilities/Utilities/utilities.h"
 
 int part1(std::vector<std::tuple<std::string, int>>& instructions)
 {

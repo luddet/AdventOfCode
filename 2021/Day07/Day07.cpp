@@ -6,7 +6,8 @@
 #include <sstream>
 #include <vector>
 
-#include "../Utilities/utilities.h"
+#include "../../Utilities/Utilities/utilities.h"
+
 namespace ranges = std::ranges;
 
 auto calculate(const auto& positions, auto costFunction)

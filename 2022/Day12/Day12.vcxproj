@@ -144,12 +144,12 @@
     <ClCompile Include="Day12.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\2021\Utilities\Utilities.vcxproj">
-      <Project>{1593f446-de1a-49f4-a134-53d76599276e}</Project>
-    </ProjectReference>
+    <Text Include="input.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="input.txt" />
+    <ProjectReference Include="..\..\Utilities\Utilities\Utilities.vcxproj">
+      <Project>{1593f446-de1a-49f4-a134-53d76599276e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

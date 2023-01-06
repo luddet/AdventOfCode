@@ -5,7 +5,7 @@
 #include <ranges>
 #include <concepts>
 
-#include "../../2021/Utilities/utilities.h"
+#include "../../Utilities/Utilities/utilities.h"
 
 int getPriority(auto c) requires std::integral<decltype(c)> {	return c >= 'A' && c <= 'Z' ? c - 'A' + 27 : c - 'a' + 1; }
 
