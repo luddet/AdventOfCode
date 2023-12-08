@@ -14,9 +14,8 @@ func main() {
 
 	maxCubes := map[string]int{"red": 12, "green": 13, "blue": 14}
 
-	var sum int
+	var sum, powerSum int
 	scanner := bufio.NewScanner(file)
-LineLoop:
 	for scanner.Scan() {
 		line := scanner.Text()
 		line, found := strings.CutPrefix(line, "Game ")
@@ -28,6 +27,8 @@ LineLoop:
 		gameNr, err := strconv.Atoi(gameNrStr)
 		panicOnError(err)
 
+		minCubes := map[string]int{}
+
 		sets := strings.Split(line, ";")
 		for _, set := range sets {
 			colors := strings.Split(set, ",")
@@ -37,13 +38,21 @@ LineLoop:
 				colorName := colorAndNumber[1]
 				panicOnError(err)
 				if colorN > maxCubes[colorName] {
-					continue LineLoop
+					gameNr = 0
 				}
+
+				minCubes[colorName] = max(colorN, minCubes[colorName])
 			}
 		}
+		power := 1
+		for _, num := range minCubes {
+			power *= num
+		}
+		powerSum += power
 		sum += gameNr
 	}
 	fmt.Printf("Day 02 Part 1: %d\n", sum)
+	fmt.Printf("Day 02 Part 2: %d\n", powerSum)
 }
 
 func panicOnError(err error) {
