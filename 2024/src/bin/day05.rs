@@ -51,13 +51,7 @@ fn fix_order(update: &mut Update, rules: &Rules) {
 }
 
 fn validate_order(update: &Update, rules: &Rules) -> bool {
-    let mut it = update.iter();
-    while let Some(i) = it.next() {
-        if it.clone().any(|d| rules[*i as usize].contains(&d)) {
-            return false;
-        }
-    }
-    true
+    update.is_sorted_by(|a, b| rules[*b as usize].contains(a))
 }
 
 fn parse_input(input: &str) -> (Rules, Updates) {
@@ -83,7 +77,6 @@ fn parse_updates(input: &str) -> Updates {
         .lines()
         .map(|line| {
             line.split(",")
-                // .inspect(|token| println!("{:?}", token))
                 .map(|token| token.parse::<u8>().unwrap())
                 .collect()
         })
