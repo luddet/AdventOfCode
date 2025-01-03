@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{cmp::Ordering, collections::HashSet};
 
 use year2024::input::get_input_as_string;
 
@@ -20,7 +20,34 @@ fn main() {
         .filter(|update| validate_order(&update, &rules))
         .map(|update| update[(update.len() - 1) / 2] as i32)
         .sum();
-    println!("Day05 part 1: {}", part1);
+
+    let mut bad_updates: Updates = updates
+        .iter()
+        .filter(|update| !validate_order(&update, &rules))
+        .cloned()
+        .collect();
+
+    bad_updates
+        .iter_mut()
+        .for_each(|update| fix_order(update, &rules));
+
+    let part2: i32 = bad_updates
+        .iter()
+        .map(|update| update[(update.len() - 1) / 2] as i32)
+        .sum();
+
+    println!("Day05 part 1: {part1}");
+    println!("Day05 part 2: {part2}");
+}
+
+fn fix_order(update: &mut Update, rules: &Rules) {
+    update.sort_by(|a, b| {
+        if rules[*b as usize].contains(a) {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    });
 }
 
 fn validate_order(update: &Update, rules: &Rules) -> bool {
